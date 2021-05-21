@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -11,6 +13,18 @@ type Project struct {
 	Message string
 }
 
+func (p Project) getMsg() string {
+	return p.Message
+}
+
+func (p Project) getId() string {
+	return p.Id
+}
+
+func (p Project) latest() {
+	fmt.Printf("%s : %s\n", p.Id, p.Message)
+}
+
 func main() {
 	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
 	if err != nil {
@@ -18,14 +32,17 @@ func main() {
 	}
 
 	db.AutoMigrate(&Project{})
-	db.Create(&Project{Id: "12345", Message: "hello"})
+	//	db.Create(&Project{Id: "12345", Message: "hello"})
 
 	var project Project
-	db.First(&project, 1)
-	db.First(&project, "code =  ?", "D42")
+	var projects []Project
+	db.Find(&projects)
+	db.First(&project)
+	project.latest()
 
-	db.Model(&project).Update("Message", "Hello world")
-	db.Model(&project).Updates(Project{Id: "12345", Message: "hello"})
+	for _, proj := range projects {
+		proj.latest()
+	}
 }
 
 // https://gorm.io/docs/#Quick-Start
