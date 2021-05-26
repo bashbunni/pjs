@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -36,18 +37,27 @@ func main() {
 		panic("failed to connect database")
 	}
 
+	args := os.Args[:]
+
+	if len(args) <= 1 {
+		fmt.Println("Please add a message to commit")
+		os.Exit(1)
+	}
+
+	message := os.Args[1]
+
 	// migrate the schema
 	db.AutoMigrate(&Project{})
 
 	// other things
 	var project Project
 
-	project.add("bonk", db)
+	project.add(message, db)
 
 	var projects []Project
 	db.Find(&projects)
 	db.First(&project)
-	//	project.latest()
+	project.latest()
 
 	for _, proj := range projects {
 		proj.latest()
