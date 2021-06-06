@@ -8,26 +8,47 @@ import (
 	"gorm.io/gorm"
 )
 
+const Markdown = "markdown"
+const Csv = "csv"
+const format = "%d : %s\n"
+
+type Entry struct {
+	gorm.Model
+	ProjectId uint
+	Project   Project
+	Message   string
+}
+
 type Project struct {
 	gorm.Model
-	Id      uint32
-	Message string
+	Name string
 }
 
-func (p Project) getMsg() string {
-	return p.Message
+func (e Entry) getMsg() string {
+	return e.Message
 }
 
-func (p Project) getId() uint32 {
-	return p.Id
+func (e Entry) getId() uint {
+	return e.ID
 }
 
-func (p Project) latest() {
-	fmt.Printf("%d : %s\n", p.getId(), p.getMsg())
+func printAll(p Project, db *gorm.DB) {
+	// should take in an array of entries
+	var entries []Entry
+	db.Where("project_id = ?", p.ID).Find(&entries) // note to self: queries should be snakecase
+	for _, e := range entries {
+		fmt.Printf(format, e.getId(), e.getMsg())
+	}
 }
 
-func (p *Project) add(message string, db *gorm.DB) {
-	db.Create(&Project{Message: message})
+func (p *Project) saveNewEntry(message string, db *gorm.DB) {
+	db.Create(&Entry{Message: message, ProjectId: p.ID})
+}
+
+func saveNewProject(name string, db *gorm.DB) Project {
+	proj := Project{Name: name}
+	db.Create(&proj)
+	return proj
 }
 
 func main() {
@@ -47,21 +68,18 @@ func main() {
 	message := os.Args[1]
 
 	// migrate the schema
-	db.AutoMigrate(&Project{})
+	db.AutoMigrate(&Entry{}, &Project{})
 
 	// other things
 	var project Project
+	project = saveNewProject("bread's toaster", db)
+	project.saveNewEntry(message, db)
 
-	project.add(message, db)
+	var entries []Entry
+	db.Find(&entries) // contains all data from table
+	db.First(&entries)
 
-	var projects []Project
-	db.Find(&projects)
-	db.First(&project)
-	project.latest()
-
-	for _, proj := range projects {
-		proj.latest()
-	}
+	printAll(project, db)
 }
 
 // https://gorm.io/docs/#Quick-Start
