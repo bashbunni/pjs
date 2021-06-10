@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"os/exec"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -11,6 +14,13 @@ import (
 const Markdown = "markdown"
 const Csv = "csv"
 const format = "%d : %s\n"
+
+/*
+TODO:
+- open editor of choice to type message
+- create new project
+- choose project prompmpmppmpt
+*/
 
 type Entry struct {
 	gorm.Model
@@ -51,6 +61,62 @@ func saveNewProject(name string, db *gorm.DB) Project {
 	return proj
 }
 
+func printProjects(db *gorm.DB) {
+	var projects []Project
+	db.Find(&projects) // note to self: queries should be snakecase
+	fmt.Printf(projects)
+	/*
+		for _, p := range projects {
+			fmt.Printf(format, p.id, p.name)
+		}
+	*/
+}
+
+// TODO: test these functions
+
+func OpenFileInEditor(filename string) (err error) {
+	editor := os.Getenv("EDITOR")
+	// should always have a default, right?
+
+	exe, err := exec.LookPath(editor)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command(exe, filename)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
+}
+
+// TODO: figure out what this shit is
+func CaptureInputFromEditor() ([]byte, error) {
+	file, err := ioutil.TempFile(os.TempDir(), "*")
+	if err != nil {
+		return []byte{}, err
+	}
+	filename := file.Name()
+
+	defer os.Remove(filename)
+
+	if err = file.Close(); err != nil {
+		return []byte{}, err
+	}
+
+	if err = OpenFileInEditor(filename); err != nil {
+		return []byte{}, err
+	}
+
+	bytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return bytes, err
+}
+
 func main() {
 	// setup
 	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
@@ -65,16 +131,27 @@ func main() {
 		os.Exit(1)
 	}
 
-	message := os.Args[1]
+	/*
+	   TODO:
+	   - create temp file
+	   - read in temp file
+	*/
+
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("What project would you like to choose?")
+	printProjects(db)
+	chosenone, _ := reader.ReadString('\n')
+	// read in input + assign to project
 
 	// migrate the schema
 	db.AutoMigrate(&Entry{}, &Project{})
 
 	// other things
-	var project Project
-	project = saveNewProject("bread's toaster", db)
-	project.saveNewEntry(message, db)
-
+	/*
+		var project Project
+		project = saveNewProject("bread's toaster", db)
+		project.saveNewEntry(message, db)
+	*/
 	var entries []Entry
 	db.Find(&entries) // contains all data from table
 	db.First(&entries)
