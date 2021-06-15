@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strconv"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -64,12 +65,15 @@ func saveNewProject(name string, db *gorm.DB) Project {
 func printProjects(db *gorm.DB) {
 	var projects []Project
 	db.Find(&projects) // note to self: queries should be snakecase
-	fmt.Printf(projects)
-	/*
-		for _, p := range projects {
-			fmt.Printf(format, p.id, p.name)
-		}
-	*/
+	for _, p := range projects {
+		fmt.Printf(format, p.ID, p.Name)
+	}
+}
+
+func countProjects(db *gorm.DB) int {
+	var projects []Project
+	db.Find(&projects) // note to self: queries should be snakecase
+	return len(projects)
 }
 
 // TODO: test these functions
@@ -123,14 +127,6 @@ func main() {
 	if err != nil {
 		panic("failed to connect database")
 	}
-
-	args := os.Args[:]
-
-	if len(args) <= 1 {
-		fmt.Println("Please add a message to commit")
-		os.Exit(1)
-	}
-
 	/*
 	   TODO:
 	   - create temp file
@@ -140,9 +136,11 @@ func main() {
 	reader := bufio.NewReader(os.Stdin)
 	fmt.Println("What project would you like to choose?")
 	printProjects(db)
-	chosenone, _ := reader.ReadString('\n')
+	input, _ := reader.ReadString('\n')
 	// read in input + assign to project
-
+	fmt.Println("input is " + input)
+	// validate projId
+	projId, err := strconv.Atoi(input)
 	// migrate the schema
 	db.AutoMigrate(&Entry{}, &Project{})
 
@@ -155,8 +153,6 @@ func main() {
 	var entries []Entry
 	db.Find(&entries) // contains all data from table
 	db.First(&entries)
-
-	printAll(project, db)
 }
 
 // https://gorm.io/docs/#Quick-Start
