@@ -1,12 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"strconv"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -133,17 +131,15 @@ func main() {
 	   - read in temp file
 	*/
 
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("What project would you like to choose?")
+	fmt.Println("What project would you like to choose? (Default is 0)")
 	printProjects(db)
-	input, _ := reader.ReadString('\n')
+	var input int
+	fmt.Scanf("%d", &input)
 	// read in input + assign to project
-	fmt.Println("input is " + input)
+	fmt.Printf("input is %d \n", input)
 	// validate projId
-	projId, err := strconv.Atoi(input)
 	// migrate the schema
 	db.AutoMigrate(&Entry{}, &Project{})
-
 	// other things
 	/*
 		var project Project
