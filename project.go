@@ -13,6 +13,7 @@ import (
 const Markdown = "markdown"
 const Csv = "csv"
 const format = "%d : %s\n"
+const defaultInput = 1
 
 /*
 TODO:
@@ -63,14 +64,10 @@ func saveNewProject(name string, db *gorm.DB) Project {
 
 func printProjects(db *gorm.DB) {
 	if hasProjects(db) {
-		fmt.Println(hasProjects(db))
 		projects := getProjects(db)
-		fmt.Println(projects)
-		/*
-			for _, p := range projects {
-				fmt.Printf(format, p.ID, p.Name)
-			}
-		*/
+		for _, p := range projects {
+			fmt.Printf(format, p.ID, p.Name)
+		}
 	} else {
 		fmt.Printf("There are no projects available")
 	}
@@ -145,6 +142,13 @@ func CaptureInputFromEditor() ([]byte, error) {
 	return bytes, err
 }
 
+func isValidInput(input int, db *gorm.DB) bool {
+	if input > 0 && input < countProjects(db) {
+		return true
+	}
+	return false
+}
+
 func main() {
 	// setup
 	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
@@ -157,13 +161,15 @@ func main() {
 	   - read in temp file
 	*/
 
-	fmt.Println("What project would you like to choose? (Default is 0)")
-	printProjects(db)
 	var input int
-	fmt.Scanf("%d", &input)
-	// read in input + assign to project
-	fmt.Printf("input is %d \n", input)
-	// validate projId
+	for ok := true; ok; ok = !isValidInput(input, db) {
+		fmt.Println("What project would you like to choose? (Default is 0)")
+		printProjects(db)
+		fmt.Scanf("%d", &input)
+		// read in input + assign to project
+		fmt.Printf("input is %d \n", input)
+		// validate projId
+	}
 	// migrate the schema
 	db.AutoMigrate(&Entry{}, &Project{})
 	// other things
