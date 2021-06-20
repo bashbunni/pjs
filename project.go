@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"os/exec"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -11,6 +13,13 @@ import (
 const Markdown = "markdown"
 const Csv = "csv"
 const format = "%d : %s\n"
+
+/*
+TODO:
+- open editor of choice to type message
+- create new project
+- choose project prompmpmppmpt
+*/
 
 type Entry struct {
 	gorm.Model
@@ -45,10 +54,95 @@ func (p *Project) saveNewEntry(message string, db *gorm.DB) {
 	db.Create(&Entry{Message: message, ProjectId: p.ID})
 }
 
+// this should be called on init, the user shouldn't *need* to have an entry to init the project
 func saveNewProject(name string, db *gorm.DB) Project {
 	proj := Project{Name: name}
 	db.Create(&proj)
 	return proj
+}
+
+func printProjects(db *gorm.DB) {
+	if hasProjects(db) {
+		fmt.Println(hasProjects(db))
+		projects := getProjects(db)
+		fmt.Println(projects)
+		/*
+			for _, p := range projects {
+				fmt.Printf(format, p.ID, p.Name)
+			}
+		*/
+	} else {
+		fmt.Printf("There are no projects available")
+	}
+}
+
+// error handling in case no projects are found
+// returns
+func hasProjects(db *gorm.DB) bool {
+	var projects []Project
+	if err := db.Find(&projects).Error; err != nil {
+		return false
+	}
+	return true
+}
+
+func countProjects(db *gorm.DB) int {
+	var projects []Project
+	db.Find(&projects) // note to self: queries should be snakecase
+	return len(projects)
+}
+
+func getProjects(db *gorm.DB) []Project {
+	var projects []Project
+	if hasProjects(db) {
+		db.Find(&projects)
+	}
+	return projects
+}
+
+// TODO: test these functions
+
+func OpenFileInEditor(filename string) (err error) {
+	editor := os.Getenv("EDITOR")
+	// should always have a default, right?
+
+	exe, err := exec.LookPath(editor)
+	if err != nil {
+		return err
+	}
+
+	cmd := exec.Command(exe, filename)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
+}
+
+// TODO: figure out what this shit is
+func CaptureInputFromEditor() ([]byte, error) {
+	file, err := ioutil.TempFile(os.TempDir(), "*")
+	if err != nil {
+		return []byte{}, err
+	}
+	filename := file.Name()
+
+	defer os.Remove(filename)
+
+	if err = file.Close(); err != nil {
+		return []byte{}, err
+	}
+
+	if err = OpenFileInEditor(filename); err != nil {
+		return []byte{}, err
+	}
+
+	bytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	return bytes, err
 }
 
 func main() {
@@ -57,29 +151,30 @@ func main() {
 	if err != nil {
 		panic("failed to connect database")
 	}
+	/*
+	   TODO:
+	   - create temp file
+	   - read in temp file
+	*/
 
-	args := os.Args[:]
-
-	if len(args) <= 1 {
-		fmt.Println("Please add a message to commit")
-		os.Exit(1)
-	}
-
-	message := os.Args[1]
-
+	fmt.Println("What project would you like to choose? (Default is 0)")
+	printProjects(db)
+	var input int
+	fmt.Scanf("%d", &input)
+	// read in input + assign to project
+	fmt.Printf("input is %d \n", input)
+	// validate projId
 	// migrate the schema
 	db.AutoMigrate(&Entry{}, &Project{})
-
 	// other things
-	var project Project
-	project = saveNewProject("bread's toaster", db)
-	project.saveNewEntry(message, db)
-
+	/*
+		var project Project
+		project = saveNewProject("bread's toaster", db)
+		project.saveNewEntry(message, db)
+	*/
 	var entries []Entry
 	db.Find(&entries) // contains all data from table
 	db.First(&entries)
-
-	printAll(project, db)
 }
 
 // https://gorm.io/docs/#Quick-Start
