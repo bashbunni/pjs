@@ -54,6 +54,7 @@ func (p *Project) saveNewEntry(message string, db *gorm.DB) {
 	db.Create(&Entry{Message: message, ProjectId: p.ID})
 }
 
+// this should be called on init, the user shouldn't *need* to have an entry to init the project
 func saveNewProject(name string, db *gorm.DB) Project {
 	proj := Project{Name: name}
 	db.Create(&proj)
@@ -61,17 +62,42 @@ func saveNewProject(name string, db *gorm.DB) Project {
 }
 
 func printProjects(db *gorm.DB) {
-	var projects []Project
-	db.Find(&projects) // note to self: queries should be snakecase
-	for _, p := range projects {
-		fmt.Printf(format, p.ID, p.Name)
+	if hasProjects(db) {
+		fmt.Println(hasProjects(db))
+		projects := getProjects(db)
+		fmt.Println(projects)
+		/*
+			for _, p := range projects {
+				fmt.Printf(format, p.ID, p.Name)
+			}
+		*/
+	} else {
+		fmt.Printf("There are no projects available")
 	}
+}
+
+// error handling in case no projects are found
+// returns
+func hasProjects(db *gorm.DB) bool {
+	var projects []Project
+	if err := db.Find(&projects).Error; err != nil {
+		return false
+	}
+	return true
 }
 
 func countProjects(db *gorm.DB) int {
 	var projects []Project
 	db.Find(&projects) // note to self: queries should be snakecase
 	return len(projects)
+}
+
+func getProjects(db *gorm.DB) []Project {
+	var projects []Project
+	if hasProjects(db) {
+		db.Find(&projects)
+	}
+	return projects
 }
 
 // TODO: test these functions
