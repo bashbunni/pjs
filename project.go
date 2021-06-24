@@ -92,10 +92,10 @@ func countProjects(db *gorm.DB) int {
 
 func getProject(projId int, db *gorm.DB) (Project, error) {
 	var project Project
-	if err := db.Where("project_id = ?", projId).Find(&project).Error; err != nil {
+	if err := db.Where("id = ?", projId).Find(&project).Error; err != nil {
 		return project, fmt.Errorf("Error: Project %d not found", projId)
 	}
-	db.Where("project_id = ?", projId).Find(&project)
+	db.Where("id = ?", projId).Find(&project)
 	return project, nil
 }
 
