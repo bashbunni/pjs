@@ -20,6 +20,7 @@ TODO:
 - open editor of choice to type message
 - create new project
 - choose project prompmpmppmpt
+- render markdown
 */
 
 type Entry struct {
@@ -64,7 +65,7 @@ func saveNewProject(name string, db *gorm.DB) Project {
 
 func printProjects(db *gorm.DB) {
 	if hasProjects(db) {
-		projects := getProjects(db)
+		projects := getAllProjects(db)
 		for _, p := range projects {
 			fmt.Printf(format, p.ID, p.Name)
 		}
@@ -89,7 +90,16 @@ func countProjects(db *gorm.DB) int {
 	return len(projects)
 }
 
-func getProjects(db *gorm.DB) []Project {
+func getProject(projId int, db *gorm.DB) (Project, error) {
+	var project Project
+	if err := db.Where("project_id = ?", projId).Find(&project).Error; err != nil {
+		return project, fmt.Errorf("Error: Project %d not found", projId)
+	}
+	db.Where("project_id = ?", projId).Find(&project)
+	return project, nil
+}
+
+func getAllProjects(db *gorm.DB) []Project {
 	var projects []Project
 	if hasProjects(db) {
 		db.Find(&projects)
@@ -97,26 +107,25 @@ func getProjects(db *gorm.DB) []Project {
 	return projects
 }
 
-// TODO: test these functions
-
+// open a new file in nvim or default editor; helper function
 func OpenFileInEditor(filename string) (err error) {
 	editor := os.Getenv("EDITOR")
 	// should always have a default, right?
-
+	if editor == "" {
+		editor = "nvim"
+	}
 	exe, err := exec.LookPath(editor)
 	if err != nil {
 		return err
 	}
-
 	cmd := exec.Command(exe, filename)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-
 	return cmd.Run()
 }
 
-// TODO: figure out what this shit is
+// create temp file, edit it, delete it
 func CaptureInputFromEditor() ([]byte, error) {
 	file, err := ioutil.TempFile(os.TempDir(), "*")
 	if err != nil {
@@ -168,8 +177,23 @@ func main() {
 		fmt.Scanf("%d", &input)
 		// read in input + assign to project
 		fmt.Printf("input is %d \n", input)
-		// validate projId
 	}
+	// retrieve the project
+	myproject, err := getProject(input, db)
+	// use project when we take in data from temp file
+
+	// TODO: handle output from CaptureInput function ([]byte, error)
+	// TODO: add myproject to the captured
+	message, err := CaptureInputFromEditor()
+	// convert []byte to string can be done vvv
+	fmt.Println(string(message[:]))
+	// create new entry with the message string
+	myproject.saveNewEntry(string(message[:]), db)
+	/*
+		retrieve the project to add new entry
+		see existing entries for that project
+	*/
+
 	// migrate the schema
 	db.AutoMigrate(&Entry{}, &Project{})
 	// other things
