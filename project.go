@@ -15,14 +15,6 @@ const Csv = "csv"
 const format = "%d : %s\n"
 const defaultInput = 1
 
-/*
-TODO:
-- open editor of choice to type message
-- create new project
-- choose project prompmpmppmpt
-- render markdown
-*/
-
 type Entry struct {
 	gorm.Model
 	ProjectId uint
@@ -44,7 +36,6 @@ func (e Entry) getId() uint {
 }
 
 func printAll(p Project, db *gorm.DB) {
-	// should take in an array of entries
 	var entries []Entry
 	db.Where("project_id = ?", p.ID).Find(&entries) // note to self: queries should be snakecase
 	for _, e := range entries {
@@ -56,7 +47,6 @@ func (p *Project) saveNewEntry(message string, db *gorm.DB) {
 	db.Create(&Entry{Message: message, ProjectId: p.ID})
 }
 
-// this should be called on init, the user shouldn't *need* to have an entry to init the project
 func saveNewProject(name string, db *gorm.DB) Project {
 	proj := Project{Name: name}
 	db.Create(&proj)
@@ -75,7 +65,6 @@ func printProjects(db *gorm.DB) {
 }
 
 // error handling in case no projects are found
-// returns
 func hasProjects(db *gorm.DB) bool {
 	var projects []Project
 	if err := db.Find(&projects).Error; err != nil {
@@ -151,6 +140,7 @@ func CaptureInputFromEditor() ([]byte, error) {
 	return bytes, err
 }
 
+// check if user gave a legitimate project id number
 func isValidInput(input int, db *gorm.DB) bool {
 	if input > 0 && input < countProjects(db) {
 		return true
@@ -170,9 +160,13 @@ func main() {
 	   - read in temp file
 	*/
 
+	message, err := CaptureInputFromEditor()
+	// convert []byte to string can be done vvv
+	fmt.Println(string(message[:]))
+
 	var input int
 	for ok := true; ok; ok = !isValidInput(input, db) {
-		fmt.Println("What project would you like to choose? (Default is 0)")
+		fmt.Println("What project would you like to choose? (choosing a number out of range will create a new project)")
 		printProjects(db)
 		fmt.Scanf("%d", &input)
 		// read in input + assign to project
@@ -180,13 +174,7 @@ func main() {
 	}
 	// retrieve the project
 	myproject, err := getProject(input, db)
-	// use project when we take in data from temp file
 
-	// TODO: handle output from CaptureInput function ([]byte, error)
-	// TODO: add myproject to the captured
-	message, err := CaptureInputFromEditor()
-	// convert []byte to string can be done vvv
-	fmt.Println(string(message[:]))
 	// create new entry with the message string
 	myproject.saveNewEntry(string(message[:]), db)
 	/*
