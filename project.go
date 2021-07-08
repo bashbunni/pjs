@@ -27,6 +27,8 @@ type Project struct {
 	Name string
 }
 
+// TODO: WHY IS MY ERROR NOT WORKING WHEN I GET A PROJECT
+
 func (e Entry) getMsg() string {
 	return e.Message
 }
@@ -79,13 +81,20 @@ func countProjects(db *gorm.DB) int {
 	return len(projects)
 }
 
+// TODO: refactor; do we need project? can we just to result?
 func getProject(projId int, db *gorm.DB) (Project, error) {
 	var project Project
-	if err := db.Where("id = ?", projId).Find(&project).Error; err != nil {
-		return project, fmt.Errorf("Error: Project %d not found", projId)
-	}
-	db.Where("id = ?", projId).Find(&project)
-	return project, nil
+	// result := db.Where("id = ?", projId).Find(&project)
+	err := db.Where("id = ?", projId).Find(&project).Error
+
+	fmt.Printf("%g", err)
+	/*
+		TODO: delete if we have what we want
+		if err := db.Where("id = ?", projId).Find(&project).Error; err != nil {
+			return project, fmt.Errorf("Error: Project %d not found", projId)
+		}
+	*/
+	return project, err
 }
 
 // TODO: check if this works
@@ -150,29 +159,22 @@ func CaptureInputFromEditor() ([]byte, error) {
 	return bytes, err
 }
 
-// check if user gave a legitimate project id number
-func isValidInput(input int, db *gorm.DB) bool {
-	if input > 0 && input < countProjects(db) {
-		return true
-	}
-	return false
-}
-
 // INPUT VALIDATION
 func projectPrompt(db *gorm.DB) Project {
-	var input string
+	var input int
 	printProjects(db)
-	fmt.Println("Project name: ")
-	fmt.Scanf("%s", &input)
+	fmt.Println("Project ID: ")
+	fmt.Scanf("%d", &input)
 	// read in input + assign to project
-	fmt.Printf("selection is %s \n", input)
-	// what about my 10000 duplicate project names
-	/*
-		if _, err := getProjectByName(input, db); err != nil {
-			return saveNewProject(input, db)
-		}
-	*/
-	return saveNewProject(input, db)
+	fmt.Printf("selection is %d \n", input)
+	if _, err := getProject(input, db); err != nil {
+		var name string
+		fmt.Println("what would you like to name your new project?")
+		fmt.Scanf("%s", &name) // TODO: see if we can intake formatted text?
+		return saveNewProject(name, db)
+	}
+	project, _ := getProject(input, db)
+	return project
 }
 
 func main() {
