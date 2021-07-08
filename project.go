@@ -174,6 +174,10 @@ func main() {
 	}
 	// retrieve the project
 	myproject, err := getProject(input, db)
+	// if the project doesn't exist, create a new one
+	if err != nil {
+		myproject = saveNewProject(input, db)
+	}
 
 	// create new entry with the message string
 	myproject.saveNewEntry(string(message[:]), db)
