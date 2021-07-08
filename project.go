@@ -88,6 +88,16 @@ func getProject(projId int, db *gorm.DB) (Project, error) {
 	return project, nil
 }
 
+// TODO: check if this works
+func getProjectByName(projName string, db *gorm.DB) (Project, error) {
+	var project Project
+	if err := db.Where("name = ?", projName).Find(&project).Error; err != nil {
+		return project, fmt.Errorf("Error: Project %s not found", projName)
+	}
+	db.Where("name = ?", projName).Find(&project)
+	return project, nil
+}
+
 func getAllProjects(db *gorm.DB) []Project {
 	var projects []Project
 	if hasProjects(db) {
@@ -148,36 +158,35 @@ func isValidInput(input int, db *gorm.DB) bool {
 	return false
 }
 
+// INPUT VALIDATION
+func projectPrompt(db *gorm.DB) Project {
+	var input string
+	printProjects(db)
+	fmt.Println("Project name: ")
+	fmt.Scanf("%s", &input)
+	// read in input + assign to project
+	fmt.Printf("selection is %s \n", input)
+	// what about my 10000 duplicate project names
+	/*
+		if _, err := getProjectByName(input, db); err != nil {
+			return saveNewProject(input, db)
+		}
+	*/
+	return saveNewProject(input, db)
+}
+
 func main() {
 	// setup
 	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
 	if err != nil {
 		panic("failed to connect database")
 	}
-	/*
-	   TODO:
-	   - create temp file
-	   - read in temp file
-	*/
-
+	db.AutoMigrate(&Entry{}, &Project{})
 	message, err := CaptureInputFromEditor()
 	// convert []byte to string can be done vvv
 	fmt.Println(string(message[:]))
 
-	var input int
-	for ok := true; ok; ok = !isValidInput(input, db) {
-		fmt.Println("What project would you like to choose? (choosing a number out of range will create a new project)")
-		printProjects(db)
-		fmt.Scanf("%d", &input)
-		// read in input + assign to project
-		fmt.Printf("input is %d \n", input)
-	}
-	// retrieve the project
-	myproject, err := getProject(input, db)
-	// if the project doesn't exist, create a new one
-	if err != nil {
-		myproject = saveNewProject(input, db)
-	}
+	myproject := projectPrompt(db)
 
 	// create new entry with the message string
 	myproject.saveNewEntry(string(message[:]), db)
@@ -187,13 +196,6 @@ func main() {
 	*/
 
 	// migrate the schema
-	db.AutoMigrate(&Entry{}, &Project{})
-	// other things
-	/*
-		var project Project
-		project = saveNewProject("bread's toaster", db)
-		project.saveNewEntry(message, db)
-	*/
 	var entries []Entry
 	db.Find(&entries) // contains all data from table
 	db.First(&entries)
