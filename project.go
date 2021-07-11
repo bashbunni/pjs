@@ -27,8 +27,6 @@ type Project struct {
 	Name string
 }
 
-// TODO: WHY IS MY ERROR NOT WORKING WHEN I GET A PROJECT
-
 func (e Entry) getMsg() string {
 	return e.Message
 }
@@ -82,19 +80,10 @@ func countProjects(db *gorm.DB) int {
 }
 
 // TODO: refactor; do we need project? can we just to result?
-func getProject(projId int, db *gorm.DB) (Project, error) {
+func getProject(projId int, db *gorm.DB) Project {
 	var project Project
-	// result := db.Where("id = ?", projId).Find(&project)
-	err := db.Where("id = ?", projId).Find(&project).Error
-
-	fmt.Printf("%g", err)
-	/*
-		TODO: delete if we have what we want
-		if err := db.Where("id = ?", projId).Find(&project).Error; err != nil {
-			return project, fmt.Errorf("Error: Project %d not found", projId)
-		}
-	*/
-	return project, err
+	db.Where("id = ?", projId).Find(&project)
+	return project
 }
 
 // TODO: check if this works
@@ -167,14 +156,14 @@ func projectPrompt(db *gorm.DB) Project {
 	fmt.Scanf("%d", &input)
 	// read in input + assign to project
 	fmt.Printf("selection is %d \n", input)
-	if _, err := getProject(input, db); err != nil {
+	proj := getProject(input, db)
+	if proj.ID == 0 {
 		var name string
 		fmt.Println("what would you like to name your new project?")
-		fmt.Scanf("%s", &name) // TODO: see if we can intake formatted text?
+		fmt.Scanf("%s", &name)
 		return saveNewProject(name, db)
 	}
-	project, _ := getProject(input, db)
-	return project
+	return proj
 }
 
 func main() {
