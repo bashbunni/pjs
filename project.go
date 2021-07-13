@@ -161,6 +161,7 @@ func projectPrompt(db *gorm.DB) Project {
 		var name string
 		fmt.Println("what would you like to name your new project?")
 		fmt.Scanf("%s", &name)
+		printProjects(db)
 		return saveNewProject(name, db)
 	}
 	return proj
