@@ -64,6 +64,7 @@ func printProjects(db *gorm.DB) {
 	}
 }
 
+// hasProjects: check if the projects table is empty
 // error handling in case no projects are found
 func hasProjects(db *gorm.DB) bool {
 	var projects []Project
@@ -73,29 +74,21 @@ func hasProjects(db *gorm.DB) bool {
 	return true
 }
 
+// TODO: refactor https://gorm.io/docs/advanced_query.html#Count
 func countProjects(db *gorm.DB) int {
 	var projects []Project
 	db.Find(&projects) // note to self: queries should be snakecase
 	return len(projects)
 }
 
-// TODO: refactor; do we need project? can we just to result?
+// getProject: return a specific project in the db
 func getProject(projId int, db *gorm.DB) Project {
 	var project Project
 	db.Where("id = ?", projId).Find(&project)
 	return project
 }
 
-// TODO: check if this works
-func getProjectByName(projName string, db *gorm.DB) (Project, error) {
-	var project Project
-	if err := db.Where("name = ?", projName).Find(&project).Error; err != nil {
-		return project, fmt.Errorf("Error: Project %s not found", projName)
-	}
-	db.Where("name = ?", projName).Find(&project)
-	return project, nil
-}
-
+// getAllProjects: return all projects in the db
 func getAllProjects(db *gorm.DB) []Project {
 	var projects []Project
 	if hasProjects(db) {
@@ -104,7 +97,8 @@ func getAllProjects(db *gorm.DB) []Project {
 	return projects
 }
 
-// open a new file in nvim or default editor; helper function
+// OpenFileInEditor: open a new file in nvim or default editor; helper function
+// TODO: the lookpath doesn't work on my machine?
 func OpenFileInEditor(filename string) (err error) {
 	editor := os.Getenv("EDITOR")
 	// should always have a default, right?
@@ -122,7 +116,7 @@ func OpenFileInEditor(filename string) (err error) {
 	return cmd.Run()
 }
 
-// create temp file, edit it, delete it
+// CaptureInputFromEditor: create temp file, edit it, delete it
 func CaptureInputFromEditor() ([]byte, error) {
 	file, err := ioutil.TempFile(os.TempDir(), "*")
 	if err != nil {
@@ -148,7 +142,7 @@ func CaptureInputFromEditor() ([]byte, error) {
 	return bytes, err
 }
 
-// INPUT VALIDATION
+// projectPrompt: handle user input for choosing existing projects or creating new ones
 func projectPrompt(db *gorm.DB) Project {
 	var input int
 	printProjects(db)
@@ -173,6 +167,7 @@ func main() {
 	if err != nil {
 		panic("failed to connect database")
 	}
+	// migrate the schema
 	db.AutoMigrate(&Entry{}, &Project{})
 	message, err := CaptureInputFromEditor()
 	// convert []byte to string can be done vvv
@@ -182,15 +177,9 @@ func main() {
 
 	// create new entry with the message string
 	myproject.saveNewEntry(string(message[:]), db)
-	/*
-		retrieve the project to add new entry
-		see existing entries for that project
-	*/
 
-	// migrate the schema
 	var entries []Entry
 	db.Find(&entries) // contains all data from table
 	db.First(&entries)
+	OutputMarkdown(entries)
 }
-
-// https://gorm.io/docs/#Quick-Start
