@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/pkg/errors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -148,7 +149,7 @@ func CaptureInputFromEditor() ([]byte, error) {
 	return bytes, err
 }
 
-// INPUT VALIDATION
+// projectPrompt: input validation to create new projects or edit existing
 func projectPrompt(db *gorm.DB) Project {
 	var input int
 	printProjects(db)
@@ -167,6 +168,19 @@ func projectPrompt(db *gorm.DB) Project {
 	return proj
 }
 
+// createEntry: write and save entry
+func createEntry(db *gorm.DB) error {
+	message, err := CaptureInputFromEditor()
+	if err != nil {
+		return errors.Wrap(err, "could not open editor")
+	}
+	// convert []byte to string can be done vvv
+	fmt.Println(string(message[:]))
+	myproject := projectPrompt(db)
+	myproject.saveNewEntry(string(message[:]), db)
+	return nil
+}
+
 func main() {
 	// setup
 	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
@@ -174,23 +188,11 @@ func main() {
 		panic("failed to connect database")
 	}
 	db.AutoMigrate(&Entry{}, &Project{})
-	message, err := CaptureInputFromEditor()
-	// convert []byte to string can be done vvv
-	fmt.Println(string(message[:]))
-
-	myproject := projectPrompt(db)
-
-	// create new entry with the message string
-	myproject.saveNewEntry(string(message[:]), db)
-	/*
-		retrieve the project to add new entry
-		see existing entries for that project
-	*/
 
 	// migrate the schema
 	var entries []Entry
 	db.Find(&entries) // contains all data from table
-	db.First(&entries)
+	OutputMarkdown(entries)
 }
 
 // https://gorm.io/docs/#Quick-Start

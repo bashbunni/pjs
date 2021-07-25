@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"fmt"
 	"os"
 )
 
@@ -12,16 +12,21 @@ TODO:
 - render specific date?
 */
 
-func OutputMarkdown(entries []Entry) {
+func OutputMarkdown(entries []Entry) error {
 	file, err := os.OpenFile("./output.md", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 640) // change to current date
 	if err != nil {
-		log.Fatal("unable to create file. error: %s", err.Error()) // TODO: is this how I want to handle this error?
+		return err
 	}
+	defer file.Close() // want defer as close to acquisition of resources as possible
+	var output string
 	for _, entry := range entries {
-		file.WriteString(entry.Message)
-		if err != nil {
-			log.Fatal("unable to write file. error: %s", err.Error())
-		}
+		fmt.Println(output)
+		output += entry.Message + "\n"
 	}
-	file.Close()
+	fmt.Println(output)
+	_, err = file.WriteString(output)
+	if err != nil {
+		return err
+	}
+	return nil
 }
