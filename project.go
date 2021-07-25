@@ -13,97 +13,8 @@ import (
 
 const Markdown = "markdown"
 const Csv = "csv"
-const format = "%d : %s\n"
-const defaultInput = 1
-
-type Entry struct {
-	gorm.Model
-	ProjectId uint
-	Project   Project
-	Message   string
-}
-
-type Project struct {
-	gorm.Model
-	Name string
-}
-
-func (e Entry) getMsg() string {
-	return e.Message
-}
-
-func (e Entry) getId() uint {
-	return e.ID
-}
-
-func printAll(p Project, db *gorm.DB) {
-	var entries []Entry
-	db.Where("project_id = ?", p.ID).Find(&entries) // note to self: queries should be snakecase
-	for _, e := range entries {
-		fmt.Printf(format, e.getId(), e.getMsg())
-	}
-}
-
-func (p *Project) saveNewEntry(message string, db *gorm.DB) {
-	db.Create(&Entry{Message: message, ProjectId: p.ID})
-}
-
-func saveNewProject(name string, db *gorm.DB) Project {
-	proj := Project{Name: name}
-	db.Create(&proj)
-	return proj
-}
-
-func printProjects(db *gorm.DB) {
-	if hasProjects(db) {
-		projects := getAllProjects(db)
-		for _, p := range projects {
-			fmt.Printf(format, p.ID, p.Name)
-		}
-	} else {
-		fmt.Printf("There are no projects available")
-	}
-}
-
-// error handling in case no projects are found
-func hasProjects(db *gorm.DB) bool {
-	var projects []Project
-	if err := db.Find(&projects).Error; err != nil {
-		return false
-	}
-	return true
-}
-
-func countProjects(db *gorm.DB) int {
-	var projects []Project
-	db.Find(&projects) // note to self: queries should be snakecase
-	return len(projects)
-}
-
-// TODO: refactor; do we need project? can we just to result?
-func getProject(projId int, db *gorm.DB) Project {
-	var project Project
-	db.Where("id = ?", projId).Find(&project)
-	return project
-}
-
-// TODO: check if this works
-func getProjectByName(projName string, db *gorm.DB) (Project, error) {
-	var project Project
-	if err := db.Where("name = ?", projName).Find(&project).Error; err != nil {
-		return project, fmt.Errorf("Error: Project %s not found", projName)
-	}
-	db.Where("name = ?", projName).Find(&project)
-	return project, nil
-}
-
-func getAllProjects(db *gorm.DB) []Project {
-	var projects []Project
-	if hasProjects(db) {
-		db.Find(&projects)
-	}
-	return projects
-}
+const Format = "%d : %s\n"
+const DefaultInput = 1
 
 // open a new file in nvim or default editor; helper function
 func OpenFileInEditor(filename string) (err error) {
@@ -152,7 +63,7 @@ func CaptureInputFromEditor() ([]byte, error) {
 // projectPrompt: input validation to create new projects or edit existing
 func projectPrompt(db *gorm.DB) Project {
 	var input int
-	printProjects(db)
+	PrintProjects(db)
 	fmt.Println("Project ID: ")
 	fmt.Scanf("%d", &input)
 	// read in input + assign to project
@@ -162,8 +73,8 @@ func projectPrompt(db *gorm.DB) Project {
 		var name string
 		fmt.Println("what would you like to name your new project?")
 		fmt.Scanf("%s", &name)
-		printProjects(db)
-		return saveNewProject(name, db)
+		PrintProjects(db)
+		return SaveNewProject(name, db)
 	}
 	return proj
 }
@@ -177,7 +88,7 @@ func createEntry(db *gorm.DB) error {
 	// convert []byte to string can be done vvv
 	fmt.Println(string(message[:]))
 	myproject := projectPrompt(db)
-	myproject.saveNewEntry(string(message[:]), db)
+	myproject.SaveNewEntry(string(message[:]), db)
 	return nil
 }
 
