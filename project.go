@@ -33,6 +33,7 @@ var (
 
 // mainMenu: flag action handling
 func handleFlags(db *gorm.DB) {
+	flag.Parse()
 	var entries []Entry
 	db.Find(&entries) // contains all data from table
 	if *deleteEntry != -1 {
