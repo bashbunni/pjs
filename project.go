@@ -27,6 +27,30 @@ var (
 	markdown    = flag.Bool("md", false, "output all entries to markdown file")
 )
 
+/* functions */
+
+/* queries */
+
+// mainMenu: flag action handling
+func handleFlags(db *gorm.DB) {
+	var entries []Entry
+	db.Find(&entries) // contains all data from table
+	if *deleteEntry != -1 {
+		DeleteEntry(*deleteEntry, db)
+	}
+	if *deleteProj != -1 {
+		DeleteProject(*deleteProj, db)
+	}
+	if *markdown != false {
+		OutputMarkdown(entries)
+	}
+	if *editProj != -1 {
+		RenameProject(*editProj, db)
+	}
+}
+
+/* other */
+
 // OpenFileInEditor: a new file in nvim or default editor; helper function
 func OpenFileInEditor(filename string) (err error) {
 	editor := os.Getenv("EDITOR")
@@ -90,28 +114,11 @@ func createEntry(db *gorm.DB) error {
 	return nil
 }
 
-// mainMenu: flag action handling
-func handleFlags(db *gorm.DB) {
-	var entries []Entry
-	db.Find(&entries) // contains all data from table
-
-	if *deleteEntry != -1 {
-		DeleteEntry(*deleteEntry, db)
-	}
-	if *deleteProj != -1 {
-		DeleteProject(*deleteProj, db)
-	}
-	if *markdown != false {
-		OutputMarkdown(entries)
-	}
-	if *editProj != -1 {
-		RenameProject(*editProj, db)
-	}
-}
-
 func main() {
 	// setup
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{
+		PrepareStmt: true, // caches queries for faster calls
+	})
 	if err != nil {
 		panic("failed to connect database")
 	}
