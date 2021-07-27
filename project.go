@@ -21,6 +21,7 @@ const DefaultInput = 1
 /* flags */
 var (
 	// stringvar := flag.String("optionname", "defaultvalue", "description of the flag")
+	cEntry      = flag.Bool("ce", false, "create a new entry")
 	deleteEntry = flag.Int("de", -1, "delete an existing entry; default is -1")
 	deleteProj  = flag.Int("dp", -1, "delete an existing project; default is -1")
 	editProj    = flag.Int("ep", -1, "rename an existing project; default is empty string")
@@ -36,6 +37,9 @@ func handleFlags(db *gorm.DB) {
 	flag.Parse()
 	var entries []Entry
 	db.Find(&entries) // contains all data from table
+	if *cEntry != false {
+		createEntry(db)
+	}
 	if *deleteEntry != -1 {
 		DeleteEntry(*deleteEntry, db)
 	}

@@ -13,7 +13,7 @@ TODO:
 */
 
 func OutputMarkdown(entries []Entry) error {
-	file, err := os.OpenFile("./output.md", os.O_CREATE|os.O_WRONLY, 0644) // change to current date
+	file, err := os.OpenFile("./output.md", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
