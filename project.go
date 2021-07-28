@@ -13,10 +13,7 @@ import (
 )
 
 /* constants */
-const Markdown = "markdown"
-const Csv = "csv"
 const Format = "%d : %s\n"
-const DefaultInput = 1
 
 /* flags */
 var (
@@ -26,6 +23,7 @@ var (
 	deleteProj  = flag.Int("dp", -1, "delete an existing project; default is -1")
 	editProj    = flag.Int("ep", -1, "rename an existing project; default is empty string")
 	markdown    = flag.Bool("md", false, "output all entries to markdown file")
+	pdf         = flag.Bool("pdf", false, "output all entries to pdf file")
 )
 
 /* functions */
@@ -75,7 +73,6 @@ func OpenFileInEditor(filename string) (err error) {
 }
 
 // CaptureInputFromEditor: temp file, edit it, delete it
->>>>>>> borked
 func CaptureInputFromEditor() ([]byte, error) {
 	file, err := ioutil.TempFile(os.TempDir(), "*")
 	if err != nil {
