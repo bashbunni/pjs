@@ -1,104 +1,62 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 
+	"github.com/pkg/errors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
+/* constants */
 const Markdown = "markdown"
 const Csv = "csv"
-const format = "%d : %s\n"
-const defaultInput = 1
+const Format = "%d : %s\n"
+const DefaultInput = 1
 
-type Entry struct {
-	gorm.Model
-	ProjectId uint
-	Project   Project
-	Message   string
-}
+/* flags */
+var (
+	// stringvar := flag.String("optionname", "defaultvalue", "description of the flag")
+	cEntry      = flag.Bool("ce", false, "create a new entry")
+	deleteEntry = flag.Int("de", -1, "delete an existing entry; default is -1")
+	deleteProj  = flag.Int("dp", -1, "delete an existing project; default is -1")
+	editProj    = flag.Int("ep", -1, "rename an existing project; default is empty string")
+	markdown    = flag.Bool("md", false, "output all entries to markdown file")
+)
 
-type Project struct {
-	gorm.Model
-	Name string
-}
+/* functions */
 
-func (e Entry) getMsg() string {
-	return e.Message
-}
+/* queries */
 
-func (e Entry) getId() uint {
-	return e.ID
-}
-
-func printAll(p Project, db *gorm.DB) {
+// mainMenu: flag action handling
+func handleFlags(db *gorm.DB) {
+	flag.Parse()
 	var entries []Entry
-	db.Where("project_id = ?", p.ID).Find(&entries) // note to self: queries should be snakecase
-	for _, e := range entries {
-		fmt.Printf(format, e.getId(), e.getMsg())
+	db.Find(&entries) // contains all data from table
+	if *cEntry != false {
+		createEntry(db)
+	}
+	if *deleteEntry != -1 {
+		DeleteEntry(*deleteEntry, db)
+	}
+	if *deleteProj != -1 {
+		DeleteProject(*deleteProj, db)
+	}
+	if *markdown != false {
+		OutputMarkdown(entries)
+	}
+	if *editProj != -1 {
+		RenameProject(*editProj, db)
 	}
 }
 
-func (p *Project) saveNewEntry(message string, db *gorm.DB) {
-	db.Create(&Entry{Message: message, ProjectId: p.ID})
-}
+/* other */
 
-func saveNewProject(name string, db *gorm.DB) Project {
-	proj := Project{Name: name}
-	db.Create(&proj)
-	return proj
-}
-
-func printProjects(db *gorm.DB) {
-	if hasProjects(db) {
-		projects := getAllProjects(db)
-		for _, p := range projects {
-			fmt.Printf(format, p.ID, p.Name)
-		}
-	} else {
-		fmt.Printf("There are no projects available")
-	}
-}
-
-// hasProjects: check if the projects table is empty
-// error handling in case no projects are found
-func hasProjects(db *gorm.DB) bool {
-	var projects []Project
-	if err := db.Find(&projects).Error; err != nil {
-		return false
-	}
-	return true
-}
-
-// TODO: refactor https://gorm.io/docs/advanced_query.html#Count
-func countProjects(db *gorm.DB) int {
-	var projects []Project
-	db.Find(&projects) // note to self: queries should be snakecase
-	return len(projects)
-}
-
-// getProject: return a specific project in the db
-func getProject(projId int, db *gorm.DB) Project {
-	var project Project
-	db.Where("id = ?", projId).Find(&project)
-	return project
-}
-
-// getAllProjects: return all projects in the db
-func getAllProjects(db *gorm.DB) []Project {
-	var projects []Project
-	if hasProjects(db) {
-		db.Find(&projects)
-	}
-	return projects
-}
-
-// OpenFileInEditor: open a new file in nvim or default editor; helper function
-// TODO: the lookpath doesn't work on my machine?
+// OpenFileInEditor: a new file in nvim or default editor; helper function
 func OpenFileInEditor(filename string) (err error) {
 	editor := os.Getenv("EDITOR")
 	// should always have a default, right?
@@ -116,70 +74,61 @@ func OpenFileInEditor(filename string) (err error) {
 	return cmd.Run()
 }
 
-// CaptureInputFromEditor: create temp file, edit it, delete it
+// CaptureInputFromEditor: temp file, edit it, delete it
+>>>>>>> borked
 func CaptureInputFromEditor() ([]byte, error) {
 	file, err := ioutil.TempFile(os.TempDir(), "*")
 	if err != nil {
 		return []byte{}, err
 	}
 	filename := file.Name()
-
 	defer os.Remove(filename)
-
 	if err = file.Close(); err != nil {
 		return []byte{}, err
 	}
-
 	if err = OpenFileInEditor(filename); err != nil {
 		return []byte{}, err
 	}
-
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return []byte{}, err
 	}
-
 	return bytes, err
 }
 
-// projectPrompt: handle user input for choosing existing projects or creating new ones
+// projectPrompt: input validation to create new projects or edit existing
 func projectPrompt(db *gorm.DB) Project {
 	var input int
-	printProjects(db)
+	PrintProjects(db)
 	fmt.Println("Project ID: ")
 	fmt.Scanf("%d", &input)
 	// read in input + assign to project
 	fmt.Printf("selection is %d \n", input)
-	proj := getProject(input, db)
-	if proj.ID == 0 {
-		var name string
-		fmt.Println("what would you like to name your new project?")
-		fmt.Scanf("%s", &name)
-		printProjects(db)
-		return saveNewProject(name, db)
+	return NewProject(input, db)
+}
+
+// createEntry: write and save entry
+func createEntry(db *gorm.DB) error {
+	message, err := CaptureInputFromEditor()
+	if err != nil {
+		return errors.Wrap(err, "could not open editor")
 	}
-	return proj
+	// convert []byte to string can be done vvv
+	fmt.Println(string(message[:]))
+	myproject := projectPrompt(db)
+	myproject.SaveNewEntry(string(message[:]), db)
+	return nil
 }
 
 func main() {
 	// setup
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{
+		PrepareStmt: true, // caches queries for faster calls
+	})
 	if err != nil {
 		panic("failed to connect database")
 	}
 	// migrate the schema
 	db.AutoMigrate(&Entry{}, &Project{})
-	message, err := CaptureInputFromEditor()
-	// convert []byte to string can be done vvv
-	fmt.Println(string(message[:]))
-
-	myproject := projectPrompt(db)
-
-	// create new entry with the message string
-	myproject.saveNewEntry(string(message[:]), db)
-
-	var entries []Entry
-	db.Find(&entries) // contains all data from table
-	db.First(&entries)
-	OutputMarkdown(entries)
+	handleFlags(db)
 }
