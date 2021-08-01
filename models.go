@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -28,6 +29,13 @@ func (p *Project) SaveNewEntry(message string, db *gorm.DB) {
 func DeleteEntry(pKey int, db *gorm.DB) {
 	fmt.Println(pKey)
 	db.Delete(&Entry{}, pKey)
+}
+
+// GetEntriesByDate: return all entries in a date range
+func GetEntriesByDate(start time.Time, end time.Time, db *gorm.DB) []Entry {
+	var entries []Entry
+	db.Where("created_at >= ? and created_at <= ?", start, end).Find(&entries)
+	return entries
 }
 
 /* project */

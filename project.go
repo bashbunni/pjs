@@ -4,8 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/pkg/errors"
 	"gorm.io/driver/sqlite"
@@ -24,6 +26,8 @@ var (
 	editProj    = flag.Int("ep", -1, "rename an existing project; default is empty string")
 	markdown    = flag.Bool("md", false, "output all entries to markdown file")
 	pdf         = flag.Bool("pdf", false, "output all entries to pdf file")
+	start       = flag.String("s", "", "start date for date range")
+	end         = flag.String("e", time.Now().Format("2006-01-02"), "end date for date range")
 )
 
 /* functions */
@@ -49,6 +53,18 @@ func handleFlags(db *gorm.DB) {
 	}
 	if *editProj != -1 {
 		RenameProject(*editProj, db)
+	}
+	// TODO: handle if only one is nil (throw error I guess)
+	if *start != "" {
+		st, errst := time.Parse("2006-01-02", *start)
+		if errst != nil {
+			log.Fatal(errst)
+		}
+		en, erren := time.Parse("2006-01-02", *end)
+		if erren != nil {
+			log.Fatal(erren)
+		}
+		OutputMarkdownRange(st, en, db)
 	}
 }
 
