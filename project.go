@@ -48,13 +48,19 @@ func handleFlags(db *gorm.DB) {
 	if *deleteProj != -1 {
 		DeleteProject(*deleteProj, db)
 	}
-	if *markdown != false {
-		OutputMarkdown(entries)
-	}
 	if *editProj != -1 {
 		RenameProject(*editProj, db)
 	}
-	// TODO: handle if only one is nil (throw error I guess)
+	if *markdown != false {
+		OutputMarkdown(entries)
+	}
+	if *pdf != false {
+		OutputMarkdown(entries)
+		cmd := exec.Command("pandoc", "-s", "-o", "output.pdf", "output.md")
+		if err := cmd.Run(); err != nil {
+			log.Fatal(err)
+		}
+	}
 	if *start != "" {
 		st, errst := time.Parse("2006-01-02", *start)
 		if errst != nil {
