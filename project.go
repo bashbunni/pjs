@@ -55,11 +55,7 @@ func handleFlags(db *gorm.DB) {
 		OutputMarkdown(entries)
 	}
 	if *pdf != false {
-		OutputMarkdown(entries)
-		cmd := exec.Command("pandoc", "-s", "-o", "output.pdf", "output.md")
-		if err := cmd.Run(); err != nil {
-			log.Fatal(err)
-		}
+		OutputPdf(entries)
 	}
 	if *start != "" {
 		st, errst := time.Parse("2006-01-02", *start)
@@ -79,7 +75,6 @@ func handleFlags(db *gorm.DB) {
 // OpenFileInEditor: a new file in nvim or default editor; helper function
 func OpenFileInEditor(filename string) (err error) {
 	editor := os.Getenv("EDITOR")
-	// should always have a default, right?
 	if editor == "" {
 		editor = "nvim"
 	}
