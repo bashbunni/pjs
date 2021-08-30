@@ -1,3 +1,5 @@
 test.db
 bin/
 test.db.sqbpro
+*.md
+*.pdf

@@ -1,4 +1,4 @@
-package main
+package models
 
 import (
 	"fmt"
@@ -6,12 +6,42 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/bashbunni/project-management/utils"
 	"gorm.io/gorm"
 )
 
+type Entry struct {
+	gorm.Model
+	ProjectId uint
+	Project   Project
+	Message   string
+}
+
 const divider = "_______________________________________"
 
-func getOutput(entries []Entry) []byte {
+// DeleteEntry: delete an entry by id
+func DeleteEntry(pKey int, db *gorm.DB) {
+	fmt.Println(pKey)
+	db.Delete(&Entry{}, pKey)
+}
+
+// GetEntriesByDate: return all entries in a date range
+func GetEntriesByDate(start time.Time, end time.Time, db *gorm.DB) []Entry {
+	var entries []Entry
+	db.Where("created_at >= ? and created_at <= ?", start, end).Find(&entries)
+	return entries
+}
+
+// CreateEntry: write and save entry
+func CreateEntry(pKey int, db *gorm.DB) {
+	message := utils.CaptureInputFromFile()
+	// convert []byte to string can be done vvv
+	myproject := GetOrCreateProject(pKey, db)
+	db.Create(&Entry{Message: string(message[:]), ProjectId: myproject.ID})
+	fmt.Println(string(message[:]) + " was successfully written to " + myproject.Name)
+}
+
+func formattedOutputFromEntries(entries []Entry) []byte {
 	var output string
 	for _, entry := range entries {
 		output += fmt.Sprintf("ID: %d\nCreated: %s\nMessage:\n %s\n %s\n", entry.ID, entry.CreatedAt.Format("2006-01-02"), entry.Message, divider)
@@ -19,7 +49,7 @@ func getOutput(entries []Entry) []byte {
 	return []byte(output)
 }
 
-func OutputMarkdownRange(start time.Time, end time.Time, db *gorm.DB) {
+func OutputMarkdownByDateRange(start time.Time, end time.Time, db *gorm.DB) {
 	entries := GetEntriesByDate(start, end, db)
 	OutputMarkdown(entries)
 }
@@ -30,7 +60,7 @@ func OutputMarkdown(entries []Entry) error {
 		return err
 	}
 	defer file.Close() // want defer as close to acquisition of resources as possible
-	output := getOutput(entries)
+	output := formattedOutputFromEntries(entries)
 	_, err = file.Write(output)
 
 	if err != nil {
@@ -39,8 +69,8 @@ func OutputMarkdown(entries []Entry) error {
 	return nil
 }
 
-func OutputPdf(entries []Entry) error {
-	output := getOutput(entries)                               // []byte
+func OutputPDF(entries []Entry) error {
+	output := formattedOutputFromEntries(entries)              // []byte
 	pandoc := exec.Command("pandoc", "-s", "-o", "output.pdf") // c is going to run pandoc, so I'm assigning the pipe to c
 	wc, wcerr := pandoc.StdinPipe()                            // io.WriteCloser, err
 	if wcerr != nil {
@@ -51,7 +81,6 @@ func OutputPdf(entries []Entry) error {
 	go func() {
 		defer wc.Close()
 		_, err := wc.Write(output)
-		fmt.Println("I wrote things I think")
 		goerr <- err
 		close(goerr)
 		close(done)
@@ -59,7 +88,6 @@ func OutputPdf(entries []Entry) error {
 	if err := <-goerr; err != nil {
 		return err
 	}
-	fmt.Println("I'm about to run things")
 	err := pandoc.Run()
 	if err != nil {
 		return err
