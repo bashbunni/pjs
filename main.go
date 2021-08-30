@@ -11,6 +11,11 @@ import (
 	"gorm.io/gorm"
 )
 
+/*
+TODO: instead of asking which project each time, the user will need to choose a project to work in
+why? minimize queries on db -> query for entries once and again when a new entry is added
+*/
+
 // mainMenu: flag action handling
 func handleFlags(db *gorm.DB) {
 	flag.Parse()
