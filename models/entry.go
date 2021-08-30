@@ -19,20 +19,20 @@ type Entry struct {
 
 const divider = "_______________________________________"
 
-// DeleteEntry: delete an entry by id
+// DeleteEntry deletes an entry by id
 func DeleteEntry(pKey int, db *gorm.DB) {
 	fmt.Println(pKey)
 	db.Delete(&Entry{}, pKey)
 }
 
-// GetEntriesByDate: return all entries in a date range
+// GetEntriesByDate returns all entries in a date range
 func GetEntriesByDate(start time.Time, end time.Time, db *gorm.DB) []Entry {
 	var entries []Entry
 	db.Where("created_at >= ? and created_at <= ?", start, end).Find(&entries)
 	return entries
 }
 
-// CreateEntry: write and save entry
+// CreateEntry interactively captures entry message from a temp file and saves it in the project identified by pKey
 func CreateEntry(pKey int, db *gorm.DB) {
 	message := utils.CaptureInputFromFile()
 	// convert []byte to string can be done vvv
