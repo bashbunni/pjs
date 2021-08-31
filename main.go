@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 	"time"
 
@@ -48,17 +47,6 @@ func handleFlags(db *gorm.DB) {
 		}
 		models.OutputMarkdownByDateRange(st, en, db)
 	}
-}
-
-// projectPrompt: input validation to create new projects or edit existing
-func projectPrompt(db *gorm.DB) models.Project {
-	var input int
-	models.PrintProjects(db)
-	fmt.Println("Project ID: ")
-	fmt.Scanf("%d", &input)
-	// read in input + assign to project
-	fmt.Printf("selection is %d \n", input)
-	return models.CreateProject("", db)
 }
 
 func OpenSqlite() *gorm.DB {

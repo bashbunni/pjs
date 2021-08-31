@@ -33,14 +33,7 @@ func hasProjects(db *gorm.DB) bool {
 	return true
 }
 
-// countProjects: return the number of projects
-func countProjects(db *gorm.DB) int {
-	var projects []Project
-	db.Find(&projects) // note to self: queries should be snakecase
-	return len(projects)
-}
-
-// getProject: return a project by id
+// getProject returns a project by id
 func getProject(projectId int, db *gorm.DB) Project {
 	var project Project
 	db.Where("id = ?", projectId).Find(&project)
@@ -56,7 +49,7 @@ func getAllProjects(db *gorm.DB) []Project {
 	return projects
 }
 
-// DeleteProject: delete a project by id
+// DeleteProject deletes a project by id
 func DeleteProject(pKey int, db *gorm.DB) {
 	// what if pKey does not exist?
 	db.Where("project_id = ?", pKey).Delete(&Entry{})
