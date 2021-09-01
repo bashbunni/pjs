@@ -17,8 +17,6 @@ type Entry struct {
 	Message   string
 }
 
-const divider = "_______________________________________"
-
 // DeleteEntry: delete an entry by id
 func DeleteEntry(pKey int, db *gorm.DB) {
 	fmt.Println(pKey)
@@ -41,12 +39,12 @@ func CreateEntry(pKey int, db *gorm.DB) {
 	fmt.Println(string(message[:]) + " was successfully written to " + myproject.Name)
 }
 
-func formattedOutputFromEntries(entries []Entry) []byte {
+func formattedOutputFromEntries(entries []Entry) string {
 	var output string
 	for _, entry := range entries {
-		output += fmt.Sprintf("ID: %d\nCreated: %s\nMessage:\n %s\n %s\n", entry.ID, entry.CreatedAt.Format("2006-01-02"), entry.Message, divider)
+		output += fmt.Sprintf("\n# %s\n#### %s\n\n%s\n", entry.CreatedAt.Format("Monday, Jan 2, 2006"), entry.CreatedAt.Format(time.Kitchen), entry.Message)
 	}
-	return []byte(output)
+	return output
 }
 
 func OutputMarkdownByDateRange(start time.Time, end time.Time, db *gorm.DB) {
@@ -61,7 +59,7 @@ func OutputMarkdown(entries []Entry) error {
 	}
 	defer file.Close() // want defer as close to acquisition of resources as possible
 	output := formattedOutputFromEntries(entries)
-	_, err = file.Write(output)
+	_, err = file.WriteString(output)
 
 	if err != nil {
 		return err
@@ -69,28 +67,19 @@ func OutputMarkdown(entries []Entry) error {
 	return nil
 }
 
+// OutputPDF writes an array of Entry to a PDF by piping their pretty-printed versions to pandoc
+// TODO take ProjectWithEntries and title the PDF with the project name
+// TODO group multiple entries on the same date under the same date header
+// TODO better errors when output markdown is invalid LaTeX
 func OutputPDF(entries []Entry) error {
-	output := formattedOutputFromEntries(entries)              // []byte
-	pandoc := exec.Command("pandoc", "-s", "-o", "output.pdf") // c is going to run pandoc, so I'm assigning the pipe to c
-	wc, wcerr := pandoc.StdinPipe()                            // io.WriteCloser, err
-	if wcerr != nil {
-		return wcerr
-	}
-	goerr := make(chan error)
-	done := make(chan bool)
+	pandoc := exec.Command("pandoc", "-f", "markdown", "-o", "output.pdf")
+	pandocStdin, pipeErr := pandoc.StdinPipe()
+	if pipeErr != nil { return pipeErr }
 	go func() {
-		defer wc.Close()
-		_, err := wc.Write(output)
-		goerr <- err
-		close(goerr)
-		close(done)
+		defer pandocStdin.Close()
+		_, _ = pandocStdin.Write([]byte(formattedOutputFromEntries(entries)))
 	}()
-	if err := <-goerr; err != nil {
-		return err
-	}
-	err := pandoc.Run()
-	if err != nil {
-		return err
-	}
+	_, runPandocErr := pandoc.CombinedOutput()
+	if runPandocErr != nil { return runPandocErr }
 	return nil
 }
