@@ -32,6 +32,13 @@ func GetEntriesByDate(start time.Time, end time.Time, db *gorm.DB) []Entry {
 	return entries
 }
 
+// GetEntriesByProject: return all entries for a given project
+func GetEntriesByProject(pKey uint, db *gorm.DB) []Entry {
+	var entries []Entry
+	db.Where("project_id = ?").Find(&entries)
+	return entries
+}
+
 // CreateEntry: write and save entry
 func CreateEntry(pKey int, db *gorm.DB) {
 	message := utils.CaptureInputFromFile()
@@ -40,6 +47,8 @@ func CreateEntry(pKey int, db *gorm.DB) {
 	db.Create(&Entry{Message: string(message[:]), ProjectId: myproject.ID})
 	fmt.Println(string(message[:]) + " was successfully written to " + myproject.Name)
 }
+
+// outputs
 
 func formattedOutputFromEntries(entries []Entry) []byte {
 	var output string
