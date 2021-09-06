@@ -57,24 +57,24 @@ func getAllProjects(db *gorm.DB) []Project {
 }
 
 // DeleteProject: delete a project by id
-func DeleteProject(pKey int, db *gorm.DB) {
-	// what if pKey does not exist?
-	db.Where("project_id = ?", pKey).Delete(&Entry{})
-	db.Delete(&Project{}, pKey)
+func DeleteProject(projectID int, db *gorm.DB) {
+	// what if projectID does not exist?
+	db.Where("project_id = ?", projectID).Delete(&Entry{})
+	db.Delete(&Project{}, projectID)
 }
 
-func GetOrCreateProject(pKey int, db *gorm.DB) Project {
-	proj := getProject(pKey, db)
+func GetOrCreateProject(projectID int, db *gorm.DB) Project {
+	proj := getProject(projectID, db)
 	if proj.ID == notFound {
 		return CreateProject("", db)
 	}
 	return proj
 }
 
-func RenameProject(pKey int, db *gorm.DB) {
+func RenameProject(projectID int, db *gorm.DB) {
 	name := newProjectPrompt()
 	var project Project
-	db.Where("id = ?", pKey).First(&project)
+	db.Where("id = ?", projectID).First(&project)
 	project.Name = name
 	db.Save(&project)
 }
