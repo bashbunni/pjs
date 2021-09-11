@@ -1,10 +1,8 @@
 package main
 
 import (
-	"flag"
 	"fmt"
-	"log"
-	"time"
+	"os"
 
 	"github.com/bashbunni/project-management/models"
 	"gorm.io/driver/sqlite"
@@ -16,42 +14,55 @@ TODO: instead of asking which project each time, the user will need to choose a 
 why? minimize queries on db -> query for entries once and again when a new entry is added
 */
 
-// mainMenu: flag action handling
-func handleFlags(db *gorm.DB) {
-	flag.Parse()
+func handleSubcommands(db *gorm.DB) {
+	if len(os.Args) < 2 {
+		fmt.Println("expected entry, output, or project subcommands")
+		os.Exit(1)
+	}
+
 	var entries []models.Entry
 	db.Find(&entries) // contains all data from table
-	if *cEntry != -1 {
-		models.CreateEntry(*cEntry, db)
+
+	switch os.Args[1] {
+	case "entry":
+		entryCommands.Parse(os.Args[2:])
+		handleEntryCommand(entries, db)
+	case "output":
+		outputCommands.Parse(os.Args[2:])
+		handleOutputCommand(entries)
+	case "project":
+		projectCommands.Parse(os.Args[2:])
+		handleProjectCommand(db)
 	}
-	if *deleteEntry != -1 {
-		models.DeleteEntry(*deleteEntry, db)
+}
+
+func handleEntryCommand(entries []models.Entry, db *gorm.DB) {
+	if *createEntry {
+		models.CreateEntry(db)
 	}
-	if *listProj {
-		models.PrintProjects(db)
+	if *deleteEntry {
+		models.DeleteEntry(db)
 	}
-	if *deleteProj != -1 {
-		models.DeleteProject(*deleteProj, db)
-	}
-	if *editProj != -1 {
-		models.RenameProject(*editProj, db)
-	}
+}
+
+func handleOutputCommand(entries []models.Entry) {
 	if *markdown {
 		models.OutputMarkdown(entries)
 	}
 	if *pdf {
 		models.OutputPDF(entries)
 	}
-	if *start != "" {
-		st, errst := time.Parse("2006-01-02", *start)
-		if errst != nil {
-			log.Fatal(errst)
-		}
-		en, erren := time.Parse("2006-01-02", *end)
-		if erren != nil {
-			log.Fatal(erren)
-		}
-		models.OutputMarkdownByDateRange(st, en, db)
+}
+
+func handleProjectCommand(db *gorm.DB) {
+	if *listAllProjects {
+		models.PrintProjects(db)
+	}
+	if *deleteProject {
+		models.DeleteProject(db)
+	}
+	if *editProject {
+		models.RenameProject(db)
 	}
 }
 
@@ -74,6 +85,13 @@ func OpenSqlite() *gorm.DB {
 		panic("failed to connect database")
 	}
 	return db
+}
+
+func init() {
+	err := loadConfig()
+	if err != nil {
+		fmt.Println("error: ", err)
+	}
 }
 
 func main() {
