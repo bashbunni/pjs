@@ -87,13 +87,6 @@ func OpenSqlite() *gorm.DB {
 	return db
 }
 
-func init() {
-	err := loadConfig()
-	if err != nil {
-		fmt.Println("error: ", err)
-	}
-}
-
 func main() {
 	// setup
 	db := OpenSqlite()
