@@ -25,21 +25,21 @@ func parseProjectID(input string, db *gorm.DB) models.Project {
 	return models.GetOrCreateProject(projectID, db)
 }
 
-func controlEntryCommand(entries []models.Entry, db *gorm.DB) {
+func controlEntryCommand(pe *models.ProjectWithEntries, db *gorm.DB) {
 	if *createEntry {
-		models.CreateEntry(db)
+		models.CreateEntry(pe, db)
 	}
 	if *deleteEntry {
-		models.DeleteEntry(db)
+		models.DeleteEntry(pe, db)
 	}
 }
 
 func controlOutputCommand(entries []models.Entry) {
 	if *markdown {
-		models.OutputMarkdown(entries)
+		models.OutputEntriesToMarkdown(entries)
 	}
 	if *pdf {
-		models.OutputPDF(entries)
+		models.OutputEntriesToPDF(entries)
 	}
 }
 
@@ -66,7 +66,7 @@ func controlSubcommands(db *gorm.DB) *models.ProjectWithEntries {
 	switch os.Args[3] {
 	case "entry":
 		entryCommands.Parse(os.Args[2:])
-		controlEntryCommand(thisProject.GetEntries(), db)
+		controlEntryCommand(thisProject, db)
 	case "output":
 		outputCommands.Parse(os.Args[2:])
 		controlOutputCommand(thisProject.GetEntries())

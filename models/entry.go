@@ -19,37 +19,31 @@ type Entry struct {
 
 const divider = "_______________________________________"
 
-// DeleteEntry: delete an entry by id
-func DeleteEntry(projectID int, db *gorm.DB) {
-	fmt.Println(projectID)
-	db.Delete(&Entry{}, projectID)
+func DeleteEntry(pe *ProjectWithEntries, db *gorm.DB) {
+	db.Delete(&Entry{}, pe.Project.ID)
+	pe.UpdateEntries(db)
 }
 
-// GetEntriesByDate: return all entries in a date range
 func GetEntriesByDate(start time.Time, end time.Time, db *gorm.DB) []Entry {
 	var entries []Entry
 	db.Where("created_at >= ? and created_at <= ?", start, end).Find(&entries)
 	return entries
 }
 
-// GetEntriesByProject: return all entries for a given project
 func GetEntriesByProject(projectID uint, db *gorm.DB) []Entry {
 	var entries []Entry
 	db.Where("project_id = ?").Find(&entries)
 	return entries
 }
 
-// CreateEntry: write and save entry
-func CreateEntry(projectID int, db *gorm.DB) {
+func CreateEntry(pe *ProjectWithEntries, db *gorm.DB) {
 	message := utils.CaptureInputFromFile()
-	// convert []byte to string can be done vvv
-	myproject := GetOrCreateProject(projectID, db)
-	db.Create(&Entry{Message: string(message[:]), ProjectId: myproject.ID})
-	fmt.Println(string(message[:]) + " was successfully written to " + myproject.Name)
+	db.Create(&Entry{Message: string(message[:]), ProjectId: pe.Project.ID})
+	pe.UpdateEntries(db)
+	fmt.Println(string(message[:]) + " was successfully written to " + pe.Project.Name)
 }
 
 // outputs
-
 func formattedOutputFromEntries(entries []Entry) []byte {
 	var output string
 	for _, entry := range entries {
@@ -58,12 +52,7 @@ func formattedOutputFromEntries(entries []Entry) []byte {
 	return []byte(output)
 }
 
-func OutputMarkdownByDateRange(start time.Time, end time.Time, db *gorm.DB) {
-	entries := GetEntriesByDate(start, end, db)
-	OutputMarkdown(entries)
-}
-
-func OutputMarkdown(entries []Entry) error {
+func OutputEntriesToMarkdown(entries []Entry) error {
 	file, err := os.OpenFile("./output.md", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
@@ -78,7 +67,7 @@ func OutputMarkdown(entries []Entry) error {
 	return nil
 }
 
-func OutputPDF(entries []Entry) error {
+func OutputEntriesToPDF(entries []Entry) error {
 	output := formattedOutputFromEntries(entries)              // []byte
 	pandoc := exec.Command("pandoc", "-s", "-o", "output.pdf") // c is going to run pandoc, so I'm assigning the pipe to c
 	wc, wcerr := pandoc.StdinPipe()                            // io.WriteCloser, err
