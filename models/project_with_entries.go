@@ -7,9 +7,20 @@ type ProjectWithEntries struct {
 	Entries []Entry
 }
 
-func (pe *ProjectWithEntries) CreateProjectWithEntries(projectID int, db *gorm.DB) {
-	db.Where("id = ?", projectID).First(pe.Project)
-	db.Where("project_id = ?", pe.Project.ID).Find(pe.Entries)
+// TODO: does GetOrCreateProject provide sufficient validation?
+
+// getters + setters
+
+func (pe ProjectWithEntries) GetEntries() []Entry {
+	return pe.Entries
+}
+
+// functions
+
+func CreateProjectWithEntries(project Project, db *gorm.DB) *ProjectWithEntries {
+	var entries []Entry
+	db.Where("project_id = ?", project.ID).Find(&entries)
+	return &ProjectWithEntries{project, entries}
 }
 
 func (pe *ProjectWithEntries) UpdateEntries(db *gorm.DB) {

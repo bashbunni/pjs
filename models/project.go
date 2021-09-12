@@ -15,7 +15,7 @@ type Project struct {
 
 func PrintProjects(db *gorm.DB) {
 	if hasProjects(db) {
-		projects := getAllProjects(db)
+		projects := GetAllProjects(db)
 		for _, project := range projects {
 			fmt.Printf(Format, project.ID, project.Name)
 		}
@@ -48,7 +48,7 @@ func getProject(projectId int, db *gorm.DB) Project {
 }
 
 // getAllProjects: return all projects
-func getAllProjects(db *gorm.DB) []Project {
+func GetAllProjects(db *gorm.DB) []Project {
 	var projects []Project
 	if hasProjects(db) {
 		db.Find(&projects)
