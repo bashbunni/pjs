@@ -24,56 +24,87 @@ func PrintProjects(db *gorm.DB) {
 	}
 }
 
-func hasProjects(db *gorm.DB) bool {
+func (m MockProjectRepository) GetAllProjects() []Project {
+	return m.Projects
+}
+
+func (m MockProjectRepository) hasProjects() bool {
+	if len(m.Projects) > 0 {
+		return true
+	}
+	return false
+}
+
+func (m MockProjectRepository) CreateProject(name string) Project {
+	if name == "" {
+		name = newProjectPrompt()
+	}
+	proj := Project{Name: name}
+	m.Projects = append(m.Projects, proj)
+	return proj
+}
+
+// Gorm implementation
+
+type GormProjectRepository struct {
+	db *gorm.DB
+}
+
+func (g GormProjectRepository) GetOrCreateProjectByID(projectID int) Project {
+	proj := g.getProjectByID(projectID)
+	if proj.ID == notFound {
+		return g.CreateProject("")
+	}
+	return proj
+}
+
+func (g GormProjectRepository) getProjectByID(projectId int) Project {
+	var project Project
+	g.db.Where("id = ?", projectId).Find(&project)
+	return project
+}
+
+func (g GormProjectRepository) PrintProjects() {
+	if g.hasProjects() {
+		projects := g.GetAllProjects()
+		for _, project := range projects {
+			fmt.Printf(Format, project.ID, project.Name)
+		}
+	} else {
+		fmt.Printf("There are no projects available")
+	}
+}
+
+func (g GormProjectRepository) GetAllProjects() []Project {
 	var projects []Project
-	if err := db.Find(&projects).Error; err != nil {
+	if g.hasProjects() {
+		g.db.Find(&projects)
+	}
+	return projects
+}
+
+func (g GormProjectRepository) hasProjects() bool {
+	var projects []Project
+	if err := g.db.Find(&projects).Error; err != nil {
 		return false
 	}
 	return true
 }
 
-func getProjectByID(projectId int, db *gorm.DB) Project {
-	var project Project
-	db.Where("id = ?", projectId).Find(&project)
-	return project
-}
-
-func GetAllProjects(db *gorm.DB) []Project {
-	var projects []Project
-	if hasProjects(db) {
-		db.Find(&projects)
-	}
-	return projects
-}
-
-func DeleteProject(pe *ProjectWithEntries, db *gorm.DB) {
-	// what if projectID does not exist?
-	DeleteEntries(pe, db)
-	db.Delete(&Project{}, pe.Project.ID)
-}
-
-func newProjectPrompt() string {
-	var name string
-	fmt.Println("what would you like to name your project?")
-	fmt.Scanf("%s", &name)
-	return name
-}
-
-func CreateProject(name string, db *gorm.DB) Project {
+func (g GormProjectRepository) CreateProject(name string) Project {
 	if name == "" {
 		name = newProjectPrompt()
 	}
 	proj := Project{Name: name}
-	db.Create(&proj)
+	g.db.Create(&proj)
 	return proj
 }
 
-func GetOrCreateProjectByID(projectID int, db *gorm.DB) Project {
-	proj := getProjectByID(projectID, db)
-	if proj.ID == notFound {
-		return CreateProject("", db)
-	}
-	return proj
+// TODO: check for cascade delete functionality for GORM
+func DeleteProject(pe *ProjectWithEntries, db *gorm.DB) {
+	// what if projectID does not exist?
+	DeleteEntries(pe, db)
+	db.Delete(&Project{}, pe.Project.ID)
 }
 
 // TODO: make pe's Project a *Project instead to simplify?
@@ -84,4 +115,11 @@ func RenameProject(pe *ProjectWithEntries, db *gorm.DB) {
 	project.Name = name
 	pe.Project.Name = name
 	db.Save(&project)
+}
+
+func newProjectPrompt() string {
+	var name string
+	fmt.Println("what would you like to name your project?")
+	fmt.Scanf("%s", &name)
+	return name
 }
