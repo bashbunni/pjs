@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"time"
 
 	"github.com/bashbunni/project-management/utils"
 	"gorm.io/gorm"
@@ -24,15 +23,13 @@ func DeleteEntry(pe *ProjectWithEntries, db *gorm.DB) {
 	pe.UpdateEntries(db)
 }
 
-func GetEntriesByDate(start time.Time, end time.Time, db *gorm.DB) []Entry {
-	var entries []Entry
-	db.Where("created_at >= ? and created_at <= ?", start, end).Find(&entries)
-	return entries
+func DeleteEntries(pe *ProjectWithEntries, db *gorm.DB) {
+	db.Where("project_id = ?", pe.Project.ID).Delete(&Entry{})
 }
 
 func GetEntriesByProject(projectID uint, db *gorm.DB) []Entry {
 	var entries []Entry
-	db.Where("project_id = ?").Find(&entries)
+	db.Where("project_id = ?", projectID).Find(&entries)
 	return entries
 }
 

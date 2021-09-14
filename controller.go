@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 
@@ -9,20 +10,35 @@ import (
 	"gorm.io/gorm"
 )
 
+func controlSubcommands(db *gorm.DB) *models.ProjectWithEntries {
+	if !hasSubcommands() {
+		log.Fatal("no subcommands given")
+	}
+	project := parseProjectID(os.Args[1], db)
+	pe := models.CreateProjectWithEntries(project, db)
+	switch os.Args[2] {
+	case "entry":
+		entryCommands.Parse(os.Args[3:])
+		controlEntryCommand(pe, db)
+	case "output":
+		outputCommands.Parse(os.Args[3:])
+		controlOutputCommand(pe.GetEntries())
+	case "project":
+		projectCommands.Parse(os.Args[3:])
+		controlProjectCommand(pe, db)
+	default:
+		fmt.Println("entry, output, or project subcommand not given")
+		os.Exit(2)
+	}
+	return pe
+}
+
 func hasSubcommands() bool {
-	if len(os.Args) < 3 {
+	if len(os.Args) < 2 {
 		fmt.Println("expected entry, output, or project subcommands after project ID")
 		return false
 	}
 	return true
-}
-
-func parseProjectID(input string, db *gorm.DB) models.Project {
-	projectID, err := strconv.Atoi(input)
-	if err != nil {
-		fmt.Errorf("unable to convert projectID to int")
-	}
-	return models.GetOrCreateProject(projectID, db)
 }
 
 func controlEntryCommand(pe *models.ProjectWithEntries, db *gorm.DB) {
@@ -36,43 +52,39 @@ func controlEntryCommand(pe *models.ProjectWithEntries, db *gorm.DB) {
 
 func controlOutputCommand(entries []models.Entry) {
 	if *markdown {
-		models.OutputEntriesToMarkdown(entries)
+		err := models.OutputEntriesToMarkdown(entries)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 	if *pdf {
-		models.OutputEntriesToPDF(entries)
+		err := models.OutputEntriesToPDF(entries)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 }
 
-func controlProjectCommand(db *gorm.DB) {
+func controlProjectCommand(pe *models.ProjectWithEntries, db *gorm.DB) {
 	if *listAllProjects {
 		models.PrintProjects(db)
 	}
 	if *deleteProject {
-		models.DeleteProject(db)
+		models.DeleteProject(pe, db)
+		os.Exit(0)
 	}
 	if *editProject {
-		models.RenameProject(db)
+		models.RenameProject(pe, db)
 	}
 }
 
-func controlSubcommands(db *gorm.DB) *models.ProjectWithEntries {
-	if !hasSubcommands() {
-		os.Exit(1)
+func parseProjectID(input string, db *gorm.DB) models.Project {
+	projectID, err := strconv.Atoi(input)
+	if err != nil {
+		log.Fatal(err)
 	}
-
-	project := parseProjectID(os.Args[1], db)
-	thisProject := models.CreateProjectWithEntries(project, db)
-
-	switch os.Args[3] {
-	case "entry":
-		entryCommands.Parse(os.Args[2:])
-		controlEntryCommand(thisProject, db)
-	case "output":
-		outputCommands.Parse(os.Args[2:])
-		controlOutputCommand(thisProject.GetEntries())
-	case "project":
-		projectCommands.Parse(os.Args[2:])
-		controlProjectCommand(db)
-	}
-	return thisProject
+	return models.GetOrCreateProjectByID(projectID, db)
 }
+
+
+

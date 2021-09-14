@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/bashbunni/project-management/models"
 	"gorm.io/driver/sqlite"
@@ -24,7 +25,7 @@ func OpenSqlite() *gorm.DB {
 		PrepareStmt: true, // caches queries for faster calls
 	})
 	if err != nil {
-		panic("failed to connect database")
+		log.Fatal(err)
 	}
 	return db
 }
@@ -34,5 +35,6 @@ func main() {
 	db := OpenSqlite()
 	// migrate the schema
 	db.AutoMigrate(&models.Entry{}, &models.Project{})
+	fmt.Println("entered main")
 	controlSubcommands(db)
 }

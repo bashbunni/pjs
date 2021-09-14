@@ -24,7 +24,6 @@ func PrintProjects(db *gorm.DB) {
 	}
 }
 
-// error handling in case no projects are found
 func hasProjects(db *gorm.DB) bool {
 	var projects []Project
 	if err := db.Find(&projects).Error; err != nil {
@@ -33,21 +32,12 @@ func hasProjects(db *gorm.DB) bool {
 	return true
 }
 
-// countProjects: return the number of projects
-func countProjects(db *gorm.DB) int {
-	var projects []Project
-	db.Find(&projects) // note to self: queries should be snakecase
-	return len(projects)
-}
-
-// getProject: return a project by id
-func getProject(projectId int, db *gorm.DB) Project {
+func getProjectByID(projectId int, db *gorm.DB) Project {
 	var project Project
 	db.Where("id = ?", projectId).Find(&project)
 	return project
 }
 
-// getAllProjects: return all projects
 func GetAllProjects(db *gorm.DB) []Project {
 	var projects []Project
 	if hasProjects(db) {
@@ -56,30 +46,12 @@ func GetAllProjects(db *gorm.DB) []Project {
 	return projects
 }
 
-// DeleteProject: delete a project by id
-func DeleteProject(projectID int, db *gorm.DB) {
+func DeleteProject(pe *ProjectWithEntries, db *gorm.DB) {
 	// what if projectID does not exist?
-	db.Where("project_id = ?", projectID).Delete(&Entry{})
-	db.Delete(&Project{}, projectID)
+	DeleteEntries(pe, db)
+	db.Delete(&Project{}, pe.Project.ID)
 }
 
-func GetOrCreateProject(projectID int, db *gorm.DB) Project {
-	proj := getProject(projectID, db)
-	if proj.ID == notFound {
-		return CreateProject("", db)
-	}
-	return proj
-}
-
-func RenameProject(projectID int, db *gorm.DB) {
-	name := newProjectPrompt()
-	var project Project
-	db.Where("id = ?", projectID).First(&project)
-	project.Name = name
-	db.Save(&project)
-}
-
-/* PROMPTS */
 func newProjectPrompt() string {
 	var name string
 	fmt.Println("what would you like to name your project?")
@@ -94,4 +66,22 @@ func CreateProject(name string, db *gorm.DB) Project {
 	proj := Project{Name: name}
 	db.Create(&proj)
 	return proj
+}
+
+func GetOrCreateProjectByID(projectID int, db *gorm.DB) Project {
+	proj := getProjectByID(projectID, db)
+	if proj.ID == notFound {
+		return CreateProject("", db)
+	}
+	return proj
+}
+
+// TODO: make pe's Project a *Project instead to simplify?
+func RenameProject(pe *ProjectWithEntries, db *gorm.DB) {
+	name := newProjectPrompt()
+	var project Project
+	db.Where("id = ?", pe.Project.ID).First(&project)
+	project.Name = name
+	pe.Project.Name = name
+	db.Save(&project)
 }
