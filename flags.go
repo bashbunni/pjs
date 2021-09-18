@@ -10,7 +10,7 @@ var (
 	// entry
 	entryCommands = flag.NewFlagSet("entry", flag.ExitOnError)
 	createEntry   = entryCommands.Bool("ce", false, "create a new entry for a project; default projID is -1")
-	deleteEntry   = entryCommands.Bool("de", false, "delete an existing entry; default is -1")
+	deleteEntry   = entryCommands.Uint("de", 0, "delete an existing entry; default is -1")
 
 	// output
 	outputCommands = flag.NewFlagSet("output", flag.ExitOnError)
