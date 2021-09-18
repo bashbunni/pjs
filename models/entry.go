@@ -4,46 +4,98 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/bashbunni/project-management/utils"
 	"gorm.io/gorm"
 )
 
+// Entity
 type Entry struct {
 	gorm.Model
-	ProjectId uint
+	ID        uint
+	ProjectID uint
 	Project   Project
 	Message   string
+	DeletedAt time.Time
+}
+
+// Interface
+type EntryRepository interface {
+	DeleteEntryByID(entryID uint, pe *ProjectWithEntries)
+	DeleteEntries(pe *ProjectWithEntries)
+	GetEntriesByProjectID(projectID uint) []Entry
+	CreateEntry(pe *ProjectWithEntries)
 }
 
 const divider = "_______________________________________"
 
-func DeleteEntry(pe *ProjectWithEntries, db *gorm.DB) {
-	db.Delete(&Entry{}, pe.Project.ID)
-	pe.UpdateEntries(db)
+// Mock Implementation
+type MockEntryRepository struct {
+	Entries map[uint]*Entry
 }
 
-func DeleteEntries(pe *ProjectWithEntries, db *gorm.DB) {
-	db.Where("project_id = ?", pe.Project.ID).Delete(&Entry{})
+func (m MockEntryRepository) DeleteEntryByID(entryID uint, pe *ProjectWithEntries) {
+	// entryID starts at 1, so we subtract 1 the index
+	//	SOFT DELETE
+	m.Entries[entryID-1].DeletedAt = time.Now()
 }
 
-func GetEntriesByProject(projectID uint, db *gorm.DB) []Entry {
+func (m MockEntryRepository) DeleteEntries(pe *ProjectWithEntries) {
+	m.Entries = make(map[uint]*Entry)
+	pe.UpdateEntries(m)
+}
+
+func (m MockEntryRepository) GetEntriesByProjectID(projectID uint) []Entry {
 	var entries []Entry
-	db.Where("project_id = ?", projectID).Find(&entries)
+	for _, entry := range m.Entries {
+		if entry.ProjectID == projectID {
+			entries = append(entries, *entry)
+		}
+	}
 	return entries
 }
 
-func CreateEntry(pe *ProjectWithEntries, db *gorm.DB) {
+func (m MockEntryRepository) CreateEntry(pe *ProjectWithEntries) {
 	message := utils.CaptureInputFromFile()
-	db.Create(&Entry{Message: string(message[:]), ProjectId: pe.Project.ID})
-	pe.UpdateEntries(db)
+	entry := &Entry{ID: uint(len(m.Entries) + 1), Message: string(message[:]), ProjectID: pe.Project.ID}
+	m.Entries[entry.ID] = entry
+	pe.UpdateEntries(m)
+	fmt.Println(string(message[:]) + " was successfully written to " + pe.Project.Name)
+}
+
+// Gorm implementation
+
+type GormEntryRepository struct {
+	DB *gorm.DB
+}
+
+func (g GormEntryRepository) DeleteEntryByID(entryID uint, pe *ProjectWithEntries) {
+	g.DB.Delete(&Entry{}, entryID)
+	pe.UpdateEntries(g)
+}
+
+func (g GormEntryRepository) DeleteEntries(pe *ProjectWithEntries) {
+	g.DB.Where("project_id = ?", pe.Project.ID).Delete(&Entry{})
+}
+
+func (g GormEntryRepository) GetEntriesByProjectID(projectID uint) []Entry {
+	var Entries []Entry
+	g.DB.Where("project_id = ?", projectID).Find(&Entries)
+	return Entries
+}
+
+func (g GormEntryRepository) CreateEntry(pe *ProjectWithEntries) {
+	message := utils.CaptureInputFromFile()
+	g.DB.Create(&Entry{Message: string(message[:]), ProjectID: pe.Project.ID})
+	pe.UpdateEntries(g)
 	fmt.Println(string(message[:]) + " was successfully written to " + pe.Project.Name)
 }
 
 // outputs
-func formattedOutputFromEntries(entries []Entry) []byte {
+func formattedOutputFromEntries(Entries []Entry) []byte {
 	var output string
-	for _, entry := range entries {
+	for _, entry := range Entries {
 		output += fmt.Sprintf("ID: %d\nCreated: %s\nMessage:\n %s\n %s\n", entry.ID, entry.CreatedAt.Format("2006-01-02"), entry.Message, divider)
 	}
 	return []byte(output)
@@ -57,7 +109,6 @@ func OutputEntriesToMarkdown(entries []Entry) error {
 	defer file.Close() // want defer as close to acquisition of resources as possible
 	output := formattedOutputFromEntries(entries)
 	_, err = file.Write(output)
-
 	if err != nil {
 		return err
 	}
