@@ -18,7 +18,9 @@ const notFound uint = 0
 // Entity
 type Project struct {
 	gorm.Model
-	Name string
+	ID        uint
+	Name      string
+	DeletedAt time.Time
 }
 
 // Interface
