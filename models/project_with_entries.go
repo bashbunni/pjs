@@ -1,7 +1,5 @@
 package models
 
-import "gorm.io/gorm"
-
 type ProjectWithEntries struct {
 	Project Project
 	Entries []Entry
@@ -10,19 +8,16 @@ type ProjectWithEntries struct {
 // TODO: does GetOrCreateProject provide sufficient validation?
 
 // getters + setters
-
 func (pe ProjectWithEntries) GetEntries() []Entry {
 	return pe.Entries
 }
 
 // functions
-
-func CreateProjectWithEntries(project Project, db *gorm.DB) *ProjectWithEntries {
-	var entries []Entry
-	db.Where("project_id = ?", project.ID).Find(&entries)
+func CreateProjectWithEntries(project Project, er EntryRepository) *ProjectWithEntries {
+	entries := er.GetEntriesByProjectID(project.ID)
 	return &ProjectWithEntries{project, entries}
 }
 
-func (pe *ProjectWithEntries) UpdateEntries(db *gorm.DB) {
-	pe.Entries = GetEntriesByProject(pe.Project.ID, db)
+func (pe *ProjectWithEntries) UpdateEntries(er EntryRepository) {
+	pe.Entries = er.GetEntriesByProjectID(pe.Project.ID)
 }
