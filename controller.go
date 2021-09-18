@@ -14,18 +14,20 @@ func controlSubcommands(db *gorm.DB) *models.ProjectWithEntries {
 	if !hasSubcommands() {
 		log.Fatal("no subcommands given")
 	}
-	project := parseProjectID(os.Args[1], db)
-	pe := models.CreateProjectWithEntries(project, db)
+	pr := models.GormProjectRepository{DB: db}
+	project := parseProjectID(os.Args[1], pr)
+	er := models.GormEntryRepository{DB: db}
+	pe := models.CreateProjectWithEntries(project, er)
 	switch os.Args[2] {
 	case "entry":
 		entryCommands.Parse(os.Args[3:])
-		controlEntryCommand(pe, db)
+		controlEntryCommand(pe, er)
 	case "output":
 		outputCommands.Parse(os.Args[3:])
 		controlOutputCommand(pe.GetEntries())
 	case "project":
 		projectCommands.Parse(os.Args[3:])
-		controlProjectCommand(pe, db)
+		controlProjectCommand(pe, pr, er)
 	default:
 		fmt.Println("entry, output, or project subcommand not given")
 		os.Exit(2)
@@ -41,12 +43,12 @@ func hasSubcommands() bool {
 	return true
 }
 
-func controlEntryCommand(pe *models.ProjectWithEntries, db *gorm.DB) {
+func controlEntryCommand(pe *models.ProjectWithEntries, er models.EntryRepository) {
 	if *createEntry {
-		models.CreateEntry(pe, db)
+		er.CreateEntry(pe)
 	}
-	if *deleteEntry {
-		models.DeleteEntry(pe, db)
+	if *deleteEntry != 0 {
+		er.DeleteEntryByID(*deleteEntry, pe)
 	}
 }
 
@@ -65,26 +67,23 @@ func controlOutputCommand(entries []models.Entry) {
 	}
 }
 
-func controlProjectCommand(pe *models.ProjectWithEntries, db *gorm.DB) {
+func controlProjectCommand(pe *models.ProjectWithEntries, pr models.ProjectRepository, er models.EntryRepository) {
 	if *listAllProjects {
-		models.PrintProjects(db)
+		pr.PrintProjects()
 	}
 	if *deleteProject {
-		models.DeleteProject(pe, db)
+		pr.DeleteProject(pe, er)
 		os.Exit(0)
 	}
 	if *editProject {
-		models.RenameProject(pe, db)
+		pr.RenameProject(pe)
 	}
 }
 
-func parseProjectID(input string, db *gorm.DB) models.Project {
+func parseProjectID(input string, pr models.ProjectRepository) models.Project {
 	projectID, err := strconv.Atoi(input)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return models.GetOrCreateProjectByID(projectID, db)
+	return pr.GetOrCreateProjectByID(projectID)
 }
-
-
-
