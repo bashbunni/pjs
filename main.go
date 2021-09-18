@@ -10,14 +10,14 @@ import (
 )
 
 // projectPrompt: input validation to create new projects or edit existing
-func projectPrompt(db *gorm.DB) models.Project {
+func projectPrompt(pr models.ProjectRepository) models.Project {
 	var input int
-	models.PrintProjects(db)
+	pr.PrintProjects()
 	fmt.Println("Project ID: ")
 	fmt.Scanf("%d", &input)
 	// read in input + assign to project
 	fmt.Printf("selection is %d \n", input)
-	return models.CreateProject("", db)
+	return pr.CreateProject("")
 }
 
 func OpenSqlite() *gorm.DB {
