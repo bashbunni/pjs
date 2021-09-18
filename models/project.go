@@ -28,31 +28,33 @@ type ProjectRepository interface {
 	GetOrCreateProjectByID(projectID int) Project
 	PrintProjects()
 	hasProjects() bool
-	getProjectByID(projectId int, db *gorm.DB) Project
+	getProjectByID(projectId int) Project
 	GetAllProjects() []Project
 	CreateProject(name string) Project
+	DeleteProject(pe *ProjectWithEntries, er EntryRepository)
+	RenameProject(pe *ProjectWithEntries)
 }
 
 // Mock Implementation
 type MockProjectRepository struct {
-	Projects []Project
+	Projects map[uint]*Project
 }
 
 func (m MockProjectRepository) GetOrCreateProjectByID(projectID uint) Project {
-	proj := m.getProjectByID(projectID)
-	if proj.ID == notFound {
+	proj, err := m.getProjectByID(projectID)
+	// make getProjectByID return 0 if not found
+	if errors.Is(err, utils.ErrProjectNotFound) {
 		return m.CreateProject("")
 	}
 	return proj
 }
 
-func (m MockProjectRepository) getProjectByID(projectID uint) Project {
-	for _, p := range m.Projects {
-		if projectID == p.ID {
-			return p
-		}
+func (m MockProjectRepository) getProjectByID(projectID uint) (Project, error) {
+	// make getProjectByID return 0 if not found
+	if project, ok := m.Projects[projectID]; ok {
+		return *project, nil
 	}
-	return Project{}
+	return Project{}, utils.ErrProjectNotFound
 }
 
 func (m MockProjectRepository) PrintProjects() {
@@ -67,7 +69,11 @@ func (m MockProjectRepository) PrintProjects() {
 }
 
 func (m MockProjectRepository) GetAllProjects() []Project {
-	return m.Projects
+	var projects []Project
+	for _, project := range m.Projects {
+		projects = append(projects, *project)
+	}
+	return projects
 }
 
 func (m MockProjectRepository) hasProjects() bool {
@@ -81,15 +87,29 @@ func (m MockProjectRepository) CreateProject(name string) Project {
 	if name == "" {
 		name = newProjectPrompt()
 	}
-	proj := Project{Name: name}
-	m.Projects = append(m.Projects, proj)
-	return proj
+	proj := &Project{ID: uint(len(m.Projects) + 1), Name: name}
+	m.Projects[proj.ID] = proj
+	return *proj
+}
+
+func (m MockProjectRepository) DeleteProject(pe *ProjectWithEntries, er EntryRepository) {
+	// what if projectID does not exist?
+	if project, ok := m.Projects[pe.Project.ID]; ok {
+		project.DeletedAt = time.Now()
+	}
+	er.DeleteEntries(pe)
+}
+
+func (m MockProjectRepository) RenameProject(pe *ProjectWithEntries) {
+	name := newProjectPrompt()
+	if project, ok := m.Projects[pe.Project.ID]; ok {
+		project.Name = name
+	}
 }
 
 // Gorm implementation
-
 type GormProjectRepository struct {
-	db *gorm.DB
+	DB *gorm.DB
 }
 
 func (g GormProjectRepository) GetOrCreateProjectByID(projectID int) Project {
@@ -102,7 +122,7 @@ func (g GormProjectRepository) GetOrCreateProjectByID(projectID int) Project {
 
 func (g GormProjectRepository) getProjectByID(projectId int) Project {
 	var project Project
-	g.db.Where("id = ?", projectId).Find(&project)
+	g.DB.Where("id = ?", projectId).Find(&project)
 	return project
 }
 
@@ -120,14 +140,14 @@ func (g GormProjectRepository) PrintProjects() {
 func (g GormProjectRepository) GetAllProjects() []Project {
 	var projects []Project
 	if g.hasProjects() {
-		g.db.Find(&projects)
+		g.DB.Find(&projects)
 	}
 	return projects
 }
 
 func (g GormProjectRepository) hasProjects() bool {
 	var projects []Project
-	if err := g.db.Find(&projects).Error; err != nil {
+	if err := g.DB.Find(&projects).Error; err != nil {
 		return false
 	}
 	return true
@@ -138,25 +158,25 @@ func (g GormProjectRepository) CreateProject(name string) Project {
 		name = newProjectPrompt()
 	}
 	proj := Project{Name: name}
-	g.db.Create(&proj)
+	g.DB.Create(&proj)
 	return proj
 }
 
 // TODO: check for cascade delete functionality for GORM
-func DeleteProject(pe *ProjectWithEntries, db *gorm.DB) {
+func (g GormProjectRepository) DeleteProject(pe *ProjectWithEntries, er EntryRepository) {
 	// what if projectID does not exist?
-	DeleteEntries(pe, db)
-	db.Delete(&Project{}, pe.Project.ID)
+	er.DeleteEntries(pe)
+	g.DB.Delete(&Project{}, pe.Project.ID)
 }
 
 // TODO: make pe's Project a *Project instead to simplify?
-func RenameProject(pe *ProjectWithEntries, db *gorm.DB) {
+func (g GormProjectRepository) RenameProject(pe *ProjectWithEntries) {
 	name := newProjectPrompt()
 	var project Project
-	db.Where("id = ?", pe.Project.ID).First(&project)
+	g.DB.Where("id = ?", pe.Project.ID).First(&project)
 	project.Name = name
 	pe.Project.Name = name
-	db.Save(&project)
+	g.DB.Save(&project)
 }
 
 func newProjectPrompt() string {
