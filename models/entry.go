@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/bashbunni/project-management/utils"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -104,13 +105,13 @@ func formattedOutputFromEntries(Entries []Entry) []byte {
 func OutputEntriesToMarkdown(entries []Entry) error {
 	file, err := os.OpenFile("./output.md", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
-		return err
+		return utils.ErrCannotCreateFile
 	}
 	defer file.Close() // want defer as close to acquisition of resources as possible
 	output := formattedOutputFromEntries(entries)
 	_, err = file.Write(output)
 	if err != nil {
-		return err
+		return utils.ErrCannotSaveFile
 	}
 	return nil
 }
@@ -120,7 +121,7 @@ func OutputEntriesToPDF(entries []Entry) error {
 	pandoc := exec.Command("pandoc", "-s", "-o", "output.pdf") // c is going to run pandoc, so I'm assigning the pipe to c
 	wc, wcerr := pandoc.StdinPipe()                            // io.WriteCloser, err
 	if wcerr != nil {
-		return wcerr
+		return utils.ErrPandoc
 	}
 	goerr := make(chan error)
 	done := make(chan bool)
@@ -132,11 +133,11 @@ func OutputEntriesToPDF(entries []Entry) error {
 		close(done)
 	}()
 	if err := <-goerr; err != nil {
-		return err
+		return errors.Wrap(err, utils.CannotWriteToFilePandoc)
 	}
 	err := pandoc.Run()
 	if err != nil {
-		return err
+		return errors.Wrap(err, utils.CannotRunPandoc)
 	}
 	return nil
 }
