@@ -15,7 +15,7 @@ import (
 type Entry struct {
 	gorm.Model
 	ID        uint
-	ProjectID uint
+	ProjectID uint // TODO: get rid of duplicate data
 	Project   Project
 	Message   string
 	DeletedAt time.Time
@@ -49,9 +49,10 @@ func (m MockEntryRepository) DeleteEntries(pe *ProjectWithEntries) {
 
 func (m MockEntryRepository) GetEntriesByProjectID(projectID uint) []Entry {
 	var entries []Entry
-	for _, entry := range m.Entries {
-		if entry.ProjectID == projectID {
-			entries = append(entries, *entry)
+	// db IDs start at 1 not 0 therefore also go to one above length of entries map
+	for i := 1; i <= len(m.Entries); i++ {
+		if m.Entries[uint(i)].ProjectID == projectID {
+			entries = append(entries, *m.Entries[uint(i)])
 		}
 	}
 	return entries
@@ -90,6 +91,7 @@ func (g GormEntryRepository) CreateEntry(pe *ProjectWithEntries) {
 	message := utils.CaptureInputFromFile()
 	g.DB.Create(&Entry{Message: string(message[:]), ProjectID: pe.Project.ID})
 	pe.UpdateEntries(g)
+
 	fmt.Println(string(message[:]) + " was successfully written to " + pe.Project.Name)
 }
 
