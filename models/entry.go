@@ -29,42 +29,8 @@ type EntryRepository interface {
 	CreateEntry(pe *ProjectWithEntries)
 }
 
+// TODO: make this not trash
 const divider = "_______________________________________"
-
-// Mock Implementation
-type MockEntryRepository struct {
-	Entries map[uint]*Entry
-}
-
-func (m MockEntryRepository) DeleteEntryByID(entryID uint, pe *ProjectWithEntries) {
-	// entryID starts at 1, so we subtract 1 the index
-	//	SOFT DELETE
-	m.Entries[entryID-1].DeletedAt = time.Now()
-}
-
-func (m MockEntryRepository) DeleteEntries(pe *ProjectWithEntries) {
-	m.Entries = make(map[uint]*Entry)
-	pe.UpdateEntries(m)
-}
-
-func (m MockEntryRepository) GetEntriesByProjectID(projectID uint) []Entry {
-	var entries []Entry
-	// db IDs start at 1 not 0 therefore also go to one above length of entries map
-	for i := 1; i <= len(m.Entries); i++ {
-		if m.Entries[uint(i)].ProjectID == projectID {
-			entries = append(entries, *m.Entries[uint(i)])
-		}
-	}
-	return entries
-}
-
-func (m MockEntryRepository) CreateEntry(pe *ProjectWithEntries) {
-	message := utils.CaptureInputFromFile()
-	entry := &Entry{ID: uint(len(m.Entries) + 1), Message: string(message[:]), ProjectID: pe.Project.ID}
-	m.Entries[entry.ID] = entry
-	pe.UpdateEntries(m)
-	fmt.Println(string(message[:]) + " was successfully written to " + pe.Project.Name)
-}
 
 // Gorm implementation
 
