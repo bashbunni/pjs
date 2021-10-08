@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/bashbunni/project-management/models"
+	"github.com/bashbunni/project-management/outputs"
 	"gorm.io/gorm"
 )
 
@@ -54,13 +55,13 @@ func controlEntryCommand(pe *models.ProjectWithEntries, er models.EntryRepositor
 
 func controlOutputCommand(entries []models.Entry) {
 	if *markdown {
-		err := models.OutputEntriesToMarkdown(entries)
+		err := outputs.OutputEntriesToMarkdown(entries)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 	if *pdf {
-		err := models.OutputEntriesToPDF(entries)
+		err := outputs.OutputEntriesToPDF(entries)
 		if err != nil {
 			log.Fatal(err)
 		}
