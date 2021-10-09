@@ -19,7 +19,10 @@ func controlSubcommands(db *gorm.DB) *models.ProjectWithEntries {
 	pr := models.GormProjectRepository{DB: db}
 	project := parseProjectID(os.Args[1], pr)
 	er := models.GormEntryRepository{DB: db}
-	pe := models.CreateProjectWithEntries(project, er)
+	pe, err := models.CreateProjectWithEntries(project, er)
+	if err != nil {
+		log.Fatal(err)
+	}
 	switch os.Args[2] {
 	case "entry":
 		entryCommands.Parse(os.Args[3:])
