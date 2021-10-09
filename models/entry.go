@@ -35,7 +35,7 @@ func (g GormEntryRepository) DeleteEntries(pe *ProjectWithEntries) {
 	g.DB.Where("project_id = ?", pe.Project.ID).Delete(&Entry{})
 }
 
-func (g GormEntryRepository) GetEntriesByProjectID(projectID uint) []Entry, error {
+func (g GormEntryRepository) GetEntriesByProjectID(projectID uint) ([]Entry, error) {
 	var Entries []Entry
 	result := g.DB.Where("project_id = ?", projectID).Find(&Entries)
 	return Entries, result.Error
