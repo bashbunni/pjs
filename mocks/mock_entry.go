@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/bashbunni/project-management/models"
-	"github.com/bashbunni/project-management/utils"
 )
 
 // Mock Implementation
@@ -34,8 +33,7 @@ func (m MockEntryRepository) GetEntriesByProjectID(projectID uint) []models.Entr
 	return entries
 }
 
-func (m MockEntryRepository) CreateEntry(pe *models.ProjectWithEntries) {
-	message := utils.CaptureInputFromFile()
+func (m MockEntryRepository) CreateEntry(message []byte, pe *models.ProjectWithEntries) error {
 	entry := &models.Entry{ID: uint(len(m.Entries) + 1), Message: string(message[:]), ProjectID: pe.Project.ID}
 	m.storeEntry(entry, pe)
 }

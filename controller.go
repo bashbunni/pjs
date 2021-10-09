@@ -8,6 +8,7 @@ import (
 
 	"github.com/bashbunni/project-management/models"
 	"github.com/bashbunni/project-management/outputs"
+	"github.com/bashbunni/project-management/utils"
 	"gorm.io/gorm"
 )
 
@@ -46,7 +47,8 @@ func hasSubcommands() bool {
 
 func controlEntryCommand(pe *models.ProjectWithEntries, er models.EntryRepository) {
 	if *createEntry {
-		er.CreateEntry(pe)
+		message := utils.CaptureInputFromFile()
+		er.CreateEntry(message, pe)
 	}
 	if *deleteEntry != 0 {
 		er.DeleteEntryByID(*deleteEntry, pe)

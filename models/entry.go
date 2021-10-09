@@ -1,10 +1,8 @@
 package models
 
 import (
-	"fmt"
 	"time"
 
-	"github.com/bashbunni/project-management/utils"
 	"gorm.io/gorm"
 )
 
@@ -20,8 +18,8 @@ type Entry struct {
 type EntryRepository interface {
 	DeleteEntryByID(entryID uint, pe *ProjectWithEntries)
 	DeleteEntries(pe *ProjectWithEntries)
-	GetEntriesByProjectID(projectID uint) []Entry
-	CreateEntry(pe *ProjectWithEntries)
+	GetEntriesByProjectID(projectID uint) ([]Entry, error)
+	CreateEntry(message []byte, pe *ProjectWithEntries) error
 }
 
 type GormEntryRepository struct {
@@ -37,16 +35,15 @@ func (g GormEntryRepository) DeleteEntries(pe *ProjectWithEntries) {
 	g.DB.Where("project_id = ?", pe.Project.ID).Delete(&Entry{})
 }
 
-func (g GormEntryRepository) GetEntriesByProjectID(projectID uint) []Entry {
+func (g GormEntryRepository) GetEntriesByProjectID(projectID uint) []Entry, error {
 	var Entries []Entry
-	g.DB.Where("project_id = ?", projectID).Find(&Entries)
-	return Entries
+	result := g.DB.Where("project_id = ?", projectID).Find(&Entries)
+	return Entries, result.Error
 }
 
-func (g GormEntryRepository) CreateEntry(pe *ProjectWithEntries) {
-	message := utils.CaptureInputFromFile()
-	g.DB.Create(&Entry{Message: string(message[:]), ProjectID: pe.Project.ID})
+func (g GormEntryRepository) CreateEntry(message []byte, pe *ProjectWithEntries) error {
+	entry := Entry{Message: string(message[:]), ProjectID: pe.Project.ID}
+	result := g.DB.Create(&entry)
 	pe.UpdateEntries(g)
-
-	fmt.Println(string(message[:]) + " was successfully written to " + pe.Project.Name)
+	return result.Error
 }
