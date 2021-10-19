@@ -22,38 +22,45 @@ you can execute the file by running `./project-management "my message"`
 
 #### Create Entry
 `./project-management <projID> entry -ce`
+
 For example:
 `./project-management 2 entry -ce`
 
 #### Delete Entry
 `./project-management <projID> entry -de <entryID>`
+
 For example:
 `./project-management 2 entry -de 15`
 
 ### Output Commands
 #### Output to PDF
 `./project-management <projID> output -pdf`
+
 For example:
 `./project-management 2 output -pdf`
 
 #### Output to Markdown
 `./project-management <projID> output -md`
+
 For example:
 `./project-management 2 output -md`
 
 ### Project Commands
 #### List All Projects
 `./project-management <projID> project -lp`
+
 For example:
 `./project-management 2 project -lp`
 
 #### Delete Project
 `./project-management <projID> project -dp`
+
 For example:
 `./project-management 2 project -dp`
 
 #### Rename Project (broken)
 `./project-management <projID> project -ep "New Project Name"`
+
 For example:
 `./project-management 2 project -ep "New Project Name"`
 
