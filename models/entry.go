@@ -3,6 +3,8 @@ package models
 import (
 	"time"
 
+	"github.com/bashbunni/project-management/utils"
+	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -16,8 +18,8 @@ type Entry struct {
 }
 
 type EntryRepository interface {
-	DeleteEntryByID(entryID uint, pe *ProjectWithEntries)
-	DeleteEntries(pe *ProjectWithEntries)
+	DeleteEntryByID(entryID uint, pe *ProjectWithEntries) error
+	DeleteEntries(pe *ProjectWithEntries) error
 	GetEntriesByProjectID(projectID uint) ([]Entry, error)
 	CreateEntry(message []byte, pe *ProjectWithEntries) error
 }
@@ -26,13 +28,22 @@ type GormEntryRepository struct {
 	DB *gorm.DB
 }
 
-func (g GormEntryRepository) DeleteEntryByID(entryID uint, pe *ProjectWithEntries) {
-	g.DB.Delete(&Entry{}, entryID)
-	pe.UpdateEntries(g)
+func (g GormEntryRepository) DeleteEntryByID(entryID uint, pe *ProjectWithEntries) error {
+	result := g.DB.Delete(&Entry{}, entryID)
+	resultErr := result.Error
+	if resultErr != nil {
+		return errors.Wrap(resultErr, utils.CannotDeleteEntry)
+	}
+	err := pe.UpdateEntries(g)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (g GormEntryRepository) DeleteEntries(pe *ProjectWithEntries) {
-	g.DB.Where("project_id = ?", pe.Project.ID).Delete(&Entry{})
+func (g GormEntryRepository) DeleteEntries(pe *ProjectWithEntries) error {
+	result := g.DB.Where("project_id = ?", pe.Project.ID).Delete(&Entry{})
+	return result.Error
 }
 
 func (g GormEntryRepository) GetEntriesByProjectID(projectID uint) ([]Entry, error) {

@@ -13,11 +13,15 @@ var (
 	ErrCannotOpenEditor = errors.New("cannot open editor")
 	ErrCannotSaveFile   = errors.New("cannot save file")
 	ErrPandoc           = errors.New("cannot pipe stdin to pandoc")
+	// creation errors
 )
 
 const (
-	CannotWriteToFilePandoc = "cannot write to output pdf file"
-	CannotRunPandoc         = "cannot run pandoc"
+	CannotWriteToFilePandoc        = "cannot write to output pdf file"
+	CannotRunPandoc                = "cannot run pandoc"
+	CannotCreateProjectWithEntries = "cannot create ProjectWithEntries"
+	CannotUpdateEntries            = "cannot update entries"
+	CannotDeleteEntry              = "cannot delete entry"
 )
 
 // TODO: generic errors and wrap with more specific info

@@ -1,6 +1,7 @@
 package mocks
 
 import (
+	"errors"
 	"time"
 
 	"github.com/bashbunni/project-management/models"
@@ -11,15 +12,24 @@ type MockEntryRepository struct {
 	Entries map[uint]*models.Entry
 }
 
-func (m MockEntryRepository) DeleteEntryByID(entryID uint, pe *models.ProjectWithEntries) {
+func (m MockEntryRepository) DeleteEntryByID(entryID uint, pe *models.ProjectWithEntries) error {
 	// entryID starts at 1, so we subtract 1 the index
 	//	SOFT DELETE
 	m.Entries[entryID-1].DeletedAt = time.Now()
+	if m.Entries[entryID-1].DeletedAt == nil {
+		// TODO: finish this function
+		return errors.New("unable to delete entry")
+	}
+	return nil
 }
 
-func (m MockEntryRepository) DeleteEntries(pe *models.ProjectWithEntries) {
+func (m MockEntryRepository) DeleteEntries(pe *models.ProjectWithEntries) error {
 	m.Entries = make(map[uint]*models.Entry)
-	pe.UpdateEntries(m)
+	err := pe.UpdateEntries(m)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func (m MockEntryRepository) GetEntriesByProjectID(projectID uint) []models.Entry {
@@ -35,11 +45,12 @@ func (m MockEntryRepository) GetEntriesByProjectID(projectID uint) []models.Entr
 
 func (m MockEntryRepository) CreateEntry(message []byte, pe *models.ProjectWithEntries) error {
 	entry := &models.Entry{ID: uint(len(m.Entries) + 1), Message: string(message[:]), ProjectID: pe.Project.ID}
-	m.storeEntry(entry, pe)
+	err := m.storeEntry(entry, pe)
+	return err
 }
 
-func (m MockEntryRepository) storeEntry(entry *models.Entry, pe *models.ProjectWithEntries) {
+func (m MockEntryRepository) storeEntry(entry *models.Entry, pe *models.ProjectWithEntries) error {
 	m.Entries[entry.ID] = entry
-	pe.UpdateEntries(m)
-	// TODO: add some kind of validation confirmation for users
+	err := pe.UpdateEntries(m)
+	return err
 }
