@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/bashbunni/project-management/frontend"
 	"github.com/bashbunni/project-management/models"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -36,5 +37,6 @@ func main() {
 	// migrate the schema
 	db.AutoMigrate(&models.Entry{}, &models.Project{})
 	fmt.Println("entered main")
+	frontend.Menu()
 	controlSubcommands(db)
 }
