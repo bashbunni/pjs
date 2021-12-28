@@ -37,6 +37,9 @@ func main() {
 	// migrate the schema
 	db.AutoMigrate(&models.Entry{}, &models.Project{})
 	fmt.Println("entered main")
-	frontend.Menu()
-	controlSubcommands(db)
+	pr := models.GormProjectRepository{DB: db}
+	projects := pr.GetAllProjects()
+	fmt.Println(projects)
+	frontend.Menu(projects)
+	//	controlSubcommands(db)
 }

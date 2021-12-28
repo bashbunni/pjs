@@ -8,6 +8,6 @@ type modelImpl struct {
 	ID uint
 }
 
-func (m *modelImpl) GetID() {
+func (m *modelImpl) GetID() uint {
 	return m.ID
 }
