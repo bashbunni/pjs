@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/bashbunni/project-management/frontend"
 	"github.com/bashbunni/project-management/models"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -40,6 +39,5 @@ func main() {
 	pr := models.GormProjectRepository{DB: db}
 	projects := pr.GetAllProjects()
 	fmt.Println(projects)
-	frontend.ChooseProject(projects)
-	//	controlSubcommands(db)
+	controlSubcommands(db)
 }

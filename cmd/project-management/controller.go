@@ -6,6 +6,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/bashbunni/project-management/frontend"
 	"github.com/bashbunni/project-management/models"
 	"github.com/bashbunni/project-management/outputs"
 	"github.com/bashbunni/project-management/utils"
@@ -76,6 +77,7 @@ func controlOutputCommand(entries []models.Entry) {
 func controlProjectCommand(pe *models.ProjectWithEntries, pr models.ProjectRepository, er models.EntryRepository) {
 	if *listAllProjects {
 		pr.PrintProjects()
+		frontend.ChooseProject(pr.GetAllProjects())
 	}
 	if *deleteProject {
 		pr.DeleteProject(pe, er)
