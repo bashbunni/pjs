@@ -49,7 +49,7 @@ func (m model) View() string {
 	return docStyle.Render(m.list.View())
 }
 
-func Menu(projects []models.Project) {
+func ChooseProject(projects []models.Project) {
 	/*
 		items := []list.Item{
 			item{title: "Raspberry Pi’s", desc: "I have ’em all over my house"},
@@ -77,7 +77,10 @@ func Menu(projects []models.Project) {
 			item{title: "Terrycloth", desc: "In other words, towel fabric"},
 		}
 	*/
-	m := model{list: list.NewModel([]list.Item{projects}, list.NewDefaultDelegate(), 0, 0)}
+	items := []list.Item{
+		models.NewProject(1, "Project Journal"),
+	}
+	m := model{list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0)}
 	m.list.Title = "Projects"
 
 	p := tea.NewProgram(m)

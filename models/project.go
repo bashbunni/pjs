@@ -21,6 +21,16 @@ type Project struct {
 	DeletedAt time.Time
 }
 
+// Create a new project instance.
+// DeletedAt defaults to the zero value for time.Time.
+func NewProject(id uint, name string) *Project {
+	return &Project{ID: id, Name: name, DeletedAt: time.Time{}}
+}
+
+func (p Project) Title() string       { return p.Name }
+func (p Project) Description() string { return fmt.Sprintf("%d", p.ID) }
+func (p Project) FilterValue() string { return p.Name }
+
 // Interface
 type ProjectRepository interface {
 	GetOrCreateProjectByID(projectID int) Project

@@ -40,6 +40,6 @@ func main() {
 	pr := models.GormProjectRepository{DB: db}
 	projects := pr.GetAllProjects()
 	fmt.Println(projects)
-	frontend.Menu(projects)
+	frontend.ChooseProject(projects)
 	//	controlSubcommands(db)
 }
