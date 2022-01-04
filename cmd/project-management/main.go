@@ -21,7 +21,7 @@ func projectPrompt(pr models.ProjectRepository) models.Project {
 }
 
 func OpenSqlite() *gorm.DB {
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{
+	db, err := gorm.Open(sqlite.Open("./test.db"), &gorm.Config{
 		PrepareStmt: true, // caches queries for faster calls
 	})
 	if err != nil {

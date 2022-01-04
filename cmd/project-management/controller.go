@@ -13,32 +13,9 @@ import (
 	"gorm.io/gorm"
 )
 
-func controlSubcommands(db *gorm.DB) *models.ProjectWithEntries {
-	if !hasSubcommands() {
-		log.Fatal("no subcommands given")
-	}
+func controlSubcommands(db *gorm.DB) {
 	pr := models.GormProjectRepository{DB: db}
-	project := parseProjectID(os.Args[1], pr)
-	er := models.GormEntryRepository{DB: db}
-	pe, err := models.CreateProjectWithEntries(project, er)
-	if err != nil {
-		log.Fatal(err)
-	}
-	switch os.Args[2] {
-	case "entry":
-		entryCommands.Parse(os.Args[3:])
-		controlEntryCommand(pe, er)
-	case "output":
-		outputCommands.Parse(os.Args[3:])
-		controlOutputCommand(pe.GetEntries())
-	case "project":
-		projectCommands.Parse(os.Args[3:])
-		controlProjectCommand(pe, pr, er)
-	default:
-		fmt.Println("entry, output, or project subcommand not given")
-		os.Exit(2)
-	}
-	return pe
+	frontend.ChooseProject(pr.GetAllProjects())
 }
 
 func hasSubcommands() bool {
@@ -77,7 +54,6 @@ func controlOutputCommand(entries []models.Entry) {
 func controlProjectCommand(pe *models.ProjectWithEntries, pr models.ProjectRepository, er models.EntryRepository) {
 	if *listAllProjects {
 		pr.PrintProjects()
-		frontend.ChooseProject(pr.GetAllProjects())
 	}
 	if *deleteProject {
 		pr.DeleteProject(pe, er)

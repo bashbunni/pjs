@@ -77,9 +77,7 @@ func ChooseProject(projects []models.Project) {
 			item{title: "Terrycloth", desc: "In other words, towel fabric"},
 		}
 	*/
-	items := []list.Item{
-		models.NewProject(1, "Project Journal"),
-	}
+	items := projectsToItems(projects)
 	m := model{list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0)}
 	m.list.Title = "Projects"
 
@@ -90,4 +88,13 @@ func ChooseProject(projects []models.Project) {
 		fmt.Println("Error running program:", err)
 		os.Exit(1)
 	}
+}
+
+// convert []model.Project to []list.Item
+func projectsToItems(projects []models.Project) []list.Item {
+	items := make([]list.Item, len(projects))
+	for i, proj := range projects {
+		items[i] = list.Item(proj)
+	}
+	return items
 }
