@@ -15,7 +15,12 @@ import (
 
 func controlSubcommands(db *gorm.DB) {
 	pr := models.GormProjectRepository{DB: db}
-	frontend.ChooseProject(pr.GetAllProjects())
+	projects := pr.GetAllProjects()
+	if len(projects) <= 1 {
+		pr.GetOrCreateProjectByID(1)
+	} else {
+		frontend.ChooseProject(projects)
+	}
 }
 
 func hasSubcommands() bool {

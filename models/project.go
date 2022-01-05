@@ -27,6 +27,7 @@ func NewProject(id uint, name string) *Project {
 	return &Project{ID: id, Name: name, DeletedAt: time.Time{}}
 }
 
+// Implement list.Item for Bubbletea TUI
 func (p Project) Title() string       { return p.Name }
 func (p Project) Description() string { return fmt.Sprintf("%d", p.ID) }
 func (p Project) FilterValue() string { return p.Name }
@@ -63,30 +64,16 @@ func (g GormProjectRepository) getProjectByID(projectId int) Project {
 }
 
 func (g GormProjectRepository) PrintProjects() {
-	if g.hasProjects() {
-		projects := g.GetAllProjects()
-		for _, project := range projects {
-			fmt.Printf(Format, project.ID, project.Name)
-		}
-	} else {
-		fmt.Printf("There are no projects available")
+	projects := g.GetAllProjects()
+	for _, project := range projects {
+		fmt.Printf(Format, project.ID, project.Name)
 	}
 }
 
 func (g GormProjectRepository) GetAllProjects() []Project {
 	var projects []Project
-	if g.hasProjects() {
-		g.DB.Find(&projects)
-	}
+	g.DB.Find(&projects)
 	return projects
-}
-
-func (g GormProjectRepository) hasProjects() bool {
-	var projects []Project
-	if err := g.DB.Find(&projects).Error; err != nil {
-		return false
-	}
-	return true
 }
 
 func (g GormProjectRepository) CreateProject(name string) Project {
