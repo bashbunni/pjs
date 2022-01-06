@@ -38,7 +38,7 @@ type ProjectRepository interface {
 	PrintProjects()
 	hasProjects() bool
 	getProjectByID(projectId int) Project
-	GetAllProjects() []Project
+	GetAllProjects() ([]Project, error)
 	CreateProject(name string) Project
 	DeleteProject(pe *ProjectWithEntries, er EntryRepository)
 	RenameProject(pe *ProjectWithEntries)
@@ -64,16 +64,22 @@ func (g GormProjectRepository) getProjectByID(projectId int) Project {
 }
 
 func (g GormProjectRepository) PrintProjects() {
-	projects := g.GetAllProjects()
+	projects, err := g.GetAllProjects()
+	if err != nil {
+		fmt.Println("No projects found")
+		return
+	}
 	for _, project := range projects {
 		fmt.Printf(Format, project.ID, project.Name)
 	}
 }
 
-func (g GormProjectRepository) GetAllProjects() []Project {
+func (g GormProjectRepository) GetAllProjects() ([]Project, error) {
 	var projects []Project
-	g.DB.Find(&projects)
-	return projects
+	result := g.DB.Find(&projects)
+	// TODO:
+	// errors.Is(result.Error, gorm.ErrRecordNotFound)
+	return projects, result.Error
 }
 
 func (g GormProjectRepository) CreateProject(name string) Project {
