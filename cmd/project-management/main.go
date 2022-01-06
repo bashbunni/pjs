@@ -9,6 +9,8 @@ import (
 	"gorm.io/gorm"
 )
 
+// TODO: fix db opening -> no projects showing up
+
 // projectPrompt: input validation to create new projects or edit existing
 func projectPrompt(pr models.ProjectRepository) models.Project {
 	var input int
@@ -21,9 +23,7 @@ func projectPrompt(pr models.ProjectRepository) models.Project {
 }
 
 func OpenSqlite() *gorm.DB {
-	db, err := gorm.Open(sqlite.Open("test.db"), &gorm.Config{
-		PrepareStmt: true, // caches queries for faster calls
-	})
+	db, err := gorm.Open(sqlite.Open("./test.db"), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -31,10 +31,15 @@ func OpenSqlite() *gorm.DB {
 }
 
 func main() {
-	// setup
 	db := OpenSqlite()
-	// migrate the schema
+	fmt.Println(db)
 	db.AutoMigrate(&models.Entry{}, &models.Project{})
 	fmt.Println("entered main")
+	pr := models.GormProjectRepository{DB: db}
+	projects, err := pr.GetAllProjects()
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println(projects)
 	controlSubcommands(db)
 }

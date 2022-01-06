@@ -6,38 +6,24 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/bashbunni/project-management/frontend"
 	"github.com/bashbunni/project-management/models"
 	"github.com/bashbunni/project-management/outputs"
 	"github.com/bashbunni/project-management/utils"
 	"gorm.io/gorm"
 )
 
-func controlSubcommands(db *gorm.DB) *models.ProjectWithEntries {
-	if !hasSubcommands() {
-		log.Fatal("no subcommands given")
-	}
+func controlSubcommands(db *gorm.DB) {
 	pr := models.GormProjectRepository{DB: db}
-	project := parseProjectID(os.Args[1], pr)
-	er := models.GormEntryRepository{DB: db}
-	pe, err := models.CreateProjectWithEntries(project, er)
+	projects, err := pr.GetAllProjects()
 	if err != nil {
 		log.Fatal(err)
 	}
-	switch os.Args[2] {
-	case "entry":
-		entryCommands.Parse(os.Args[3:])
-		controlEntryCommand(pe, er)
-	case "output":
-		outputCommands.Parse(os.Args[3:])
-		controlOutputCommand(pe.GetEntries())
-	case "project":
-		projectCommands.Parse(os.Args[3:])
-		controlProjectCommand(pe, pr, er)
-	default:
-		fmt.Println("entry, output, or project subcommand not given")
-		os.Exit(2)
+	if len(projects) <= 1 {
+		pr.GetOrCreateProjectByID(1)
+	} else {
+		frontend.ChooseProject(projects)
 	}
-	return pe
 }
 
 func hasSubcommands() bool {
