@@ -76,8 +76,8 @@ func (g GormProjectRepository) PrintProjects() {
 func (g GormProjectRepository) GetAllProjects() []Project {
 	var projects []Project
 
-	if err := g.DB.Find(&projects); err != nil {
-		log.Fatalf("Projects not found: %q", result.Error)
+	if err := g.DB.Find(&projects).Error; err != nil {
+		log.Fatalf("Projects not found: %q", err)
 	}
 	return projects
 }
