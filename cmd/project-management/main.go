@@ -32,14 +32,9 @@ func OpenSqlite() *gorm.DB {
 
 func main() {
 	db := OpenSqlite()
-	fmt.Println(db)
 	db.AutoMigrate(&models.Entry{}, &models.Project{})
 	fmt.Println("entered main")
-	pr := models.GormProjectRepository{DB: db}
-	projects, err := pr.GetAllProjects()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(projects)
+	gp := models.GormProjectRepository{db}
+	fmt.Println(gp.GetAllProjects())
 	controlSubcommands(db)
 }

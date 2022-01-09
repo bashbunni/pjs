@@ -1,7 +1,9 @@
 package models
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"gorm.io/gorm"
@@ -59,7 +61,9 @@ func (g GormProjectRepository) GetOrCreateProjectByID(projectID int) Project {
 
 func (g GormProjectRepository) getProjectByID(projectId int) Project {
 	var project Project
-	g.DB.Where("id = ?", projectId).Find(&project)
+	if err := g.DB.Where("id = ?", projectId).Find(&project).Error; err != nil {
+		log.Fatalf("Unable to get project by ID: %q", err)
+	}
 	return project
 }
 
@@ -77,8 +81,10 @@ func (g GormProjectRepository) PrintProjects() {
 func (g GormProjectRepository) GetAllProjects() ([]Project, error) {
 	var projects []Project
 	result := g.DB.Find(&projects)
-	// TODO:
-	// errors.Is(result.Error, gorm.ErrRecordNotFound)
+	fmt.Println(result.RowsAffected)
+	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+		log.Fatalf("Projects not found: %q", result.Error)
+	}
 	return projects, result.Error
 }
 
@@ -87,7 +93,9 @@ func (g GormProjectRepository) CreateProject(name string) Project {
 		name = newProjectPrompt()
 	}
 	proj := Project{Name: name}
-	g.DB.Create(&proj)
+	if err := g.DB.Create(&proj).Error; err != nil {
+		log.Fatalf("Unable to create project: %q", err)
+	}
 	return proj
 }
 
@@ -95,18 +103,27 @@ func (g GormProjectRepository) CreateProject(name string) Project {
 func (g GormProjectRepository) DeleteProject(pe *ProjectWithEntries, er EntryRepository) {
 	// what if projectID does not exist?
 	er.DeleteEntries(pe)
-	g.DB.Delete(&Project{}, pe.Project.ID)
+	if err := g.DB.Delete(&Project{}, pe.Project.ID).Error; err != nil {
+		log.Fatalf("Unable to delete project: %q", err)
+	}
 }
 
 // TODO: make pe's Project a *Project instead to simplify?
 func (g GormProjectRepository) RenameProject(pe *ProjectWithEntries) {
 	name := newProjectPrompt()
 	var project Project
-	g.DB.Where("id = ?", pe.Project.ID).First(&project)
+	if err := g.DB.Where("id = ?", pe.Project.ID).First(&project).Error; err != nil {
+		log.Fatalf("Unable to rename project: %q", err)
+	}
 	project.Name = name
 	pe.Project.Name = name
-	g.DB.Save(&project)
+	if err := g.DB.Save(&project).Error; err != nil {
+		log.Fatalf("Unable to save project: %q", err)
+	}
 }
+
+// TODO: move helper?
+// helpers
 
 func newProjectPrompt() string {
 	var name string

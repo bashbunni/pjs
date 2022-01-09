@@ -14,7 +14,7 @@ import (
 )
 
 func controlSubcommands(db *gorm.DB) {
-	pr := models.GormProjectRepository{DB: db}
+	pr := models.GormProjectRepository{db}
 	projects, err := pr.GetAllProjects()
 	if err != nil {
 		log.Fatal(err)
