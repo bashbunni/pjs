@@ -1,7 +1,6 @@
 package models
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -68,24 +67,19 @@ func (g GormProjectRepository) getProjectByID(projectId int) Project {
 }
 
 func (g GormProjectRepository) PrintProjects() {
-	projects, err := g.GetAllProjects()
-	if err != nil {
-		fmt.Println("No projects found")
-		return
-	}
+	projects := g.GetAllProjects()
 	for _, project := range projects {
 		fmt.Printf(Format, project.ID, project.Name)
 	}
 }
 
-func (g GormProjectRepository) GetAllProjects() ([]Project, error) {
+func (g GormProjectRepository) GetAllProjects() []Project {
 	var projects []Project
 	result := g.DB.Find(&projects)
-	fmt.Println(result.RowsAffected)
-	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	if result.Error != nil {
 		log.Fatalf("Projects not found: %q", result.Error)
 	}
-	return projects, result.Error
+	return projects
 }
 
 func (g GormProjectRepository) CreateProject(name string) Project {

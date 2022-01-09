@@ -15,10 +15,7 @@ import (
 
 func controlSubcommands(db *gorm.DB) {
 	pr := models.GormProjectRepository{db}
-	projects, err := pr.GetAllProjects()
-	if err != nil {
-		log.Fatal(err)
-	}
+	projects := pr.GetAllProjects()
 	if len(projects) <= 1 {
 		pr.GetOrCreateProjectByID(1)
 	} else {
