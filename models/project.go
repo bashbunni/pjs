@@ -75,8 +75,8 @@ func (g GormProjectRepository) PrintProjects() {
 
 func (g GormProjectRepository) GetAllProjects() []Project {
 	var projects []Project
-	result := g.DB.Find(&projects)
-	if result.Error != nil {
+
+	if err := g.DB.Find(&projects); err != nil {
 		log.Fatalf("Projects not found: %q", result.Error)
 	}
 	return projects
@@ -95,7 +95,6 @@ func (g GormProjectRepository) CreateProject(name string) Project {
 
 // TODO: check for cascade delete functionality for GORM
 func (g GormProjectRepository) DeleteProject(pe *ProjectWithEntries, er EntryRepository) {
-	// what if projectID does not exist?
 	er.DeleteEntries(pe)
 	if err := g.DB.Delete(&Project{}, pe.Project.ID).Error; err != nil {
 		log.Fatalf("Unable to delete project: %q", err)
