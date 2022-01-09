@@ -50,7 +50,7 @@ type GormProjectRepository struct {
 	DB *gorm.DB
 }
 
-func (g GormProjectRepository) GetOrCreateProjectByID(projectID int) Project {
+func (g *GormProjectRepository) GetOrCreateProjectByID(projectID int) Project {
 	proj := g.getProjectByID(projectID)
 	if proj.ID == notFound {
 		return g.CreateProject("")
@@ -58,7 +58,7 @@ func (g GormProjectRepository) GetOrCreateProjectByID(projectID int) Project {
 	return proj
 }
 
-func (g GormProjectRepository) getProjectByID(projectId int) Project {
+func (g *GormProjectRepository) getProjectByID(projectId int) Project {
 	var project Project
 	if err := g.DB.Where("id = ?", projectId).Find(&project).Error; err != nil {
 		log.Fatalf("Unable to get project by ID: %q", err)
@@ -66,23 +66,22 @@ func (g GormProjectRepository) getProjectByID(projectId int) Project {
 	return project
 }
 
-func (g GormProjectRepository) PrintProjects() {
+func (g *GormProjectRepository) PrintProjects() {
 	projects := g.GetAllProjects()
 	for _, project := range projects {
 		fmt.Printf(Format, project.ID, project.Name)
 	}
 }
 
-func (g GormProjectRepository) GetAllProjects() []Project {
+func (g *GormProjectRepository) GetAllProjects() []Project {
 	var projects []Project
-
-	if err := g.DB.Find(&projects).Error; err != nil {
+	if err := g.DB.Table("projects").Find(&projects).Error; err != nil {
 		log.Fatalf("Projects not found: %q", err)
 	}
 	return projects
 }
 
-func (g GormProjectRepository) CreateProject(name string) Project {
+func (g *GormProjectRepository) CreateProject(name string) Project {
 	if name == "" {
 		name = newProjectPrompt()
 	}
@@ -94,7 +93,7 @@ func (g GormProjectRepository) CreateProject(name string) Project {
 }
 
 // TODO: check for cascade delete functionality for GORM
-func (g GormProjectRepository) DeleteProject(pe *ProjectWithEntries, er EntryRepository) {
+func (g *GormProjectRepository) DeleteProject(pe *ProjectWithEntries, er EntryRepository) {
 	er.DeleteEntries(pe)
 	if err := g.DB.Delete(&Project{}, pe.Project.ID).Error; err != nil {
 		log.Fatalf("Unable to delete project: %q", err)
@@ -102,7 +101,7 @@ func (g GormProjectRepository) DeleteProject(pe *ProjectWithEntries, er EntryRep
 }
 
 // TODO: make pe's Project a *Project instead to simplify?
-func (g GormProjectRepository) RenameProject(pe *ProjectWithEntries) {
+func (g *GormProjectRepository) RenameProject(pe *ProjectWithEntries) {
 	name := newProjectPrompt()
 	var project Project
 	if err := g.DB.Where("id = ?", pe.Project.ID).First(&project).Error; err != nil {
