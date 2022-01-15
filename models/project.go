@@ -17,7 +17,6 @@ const notFound uint = 0
 // Entity
 type Project struct {
 	gorm.Model
-	ID        uint
 	Name      string
 	DeletedAt time.Time
 }
@@ -25,10 +24,11 @@ type Project struct {
 // Create a new project instance.
 // DeletedAt defaults to the zero value for time.Time.
 func NewProject(id uint, name string) *Project {
-	return &Project{ID: id, Name: name, DeletedAt: time.Time{}}
+	return &Project{Name: name, DeletedAt: time.Time{}}
 }
 
 // Implement list.Item for Bubbletea TUI
+// TODO: change this
 func (p Project) Title() string       { return p.Name }
 func (p Project) Description() string { return fmt.Sprintf("%d", p.ID) }
 func (p Project) FilterValue() string { return p.Name }
@@ -58,9 +58,9 @@ func (g *GormProjectRepository) GetOrCreateProjectByID(projectID int) Project {
 	return proj
 }
 
-func (g *GormProjectRepository) getProjectByID(projectId int) Project {
+func (g *GormProjectRepository) getProjectByID(projectID int) Project {
 	var project Project
-	if err := g.DB.Where("id = ?", projectId).Find(&project).Error; err != nil {
+	if err := g.DB.Where("id = ?", projectID).Find(&project).Error; err != nil {
 		log.Fatalf("Unable to get project by ID: %q", err)
 	}
 	return project
