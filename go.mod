@@ -8,7 +8,8 @@ require (
 	github.com/charmbracelet/bubbles v0.9.0
 	github.com/charmbracelet/bubbletea v0.19.1
 	github.com/charmbracelet/lipgloss v0.4.0
+	github.com/mattn/go-sqlite3 v1.14.10 // indirect
 	github.com/pkg/errors v0.9.1
-	gorm.io/driver/sqlite v1.1.4
-	gorm.io/gorm v1.21.10
+	gorm.io/driver/sqlite v1.2.6
+	gorm.io/gorm v1.22.5
 )
