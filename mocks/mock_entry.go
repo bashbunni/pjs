@@ -2,7 +2,6 @@ package mocks
 
 import (
 	"errors"
-	"time"
 
 	"github.com/bashbunni/project-management/models"
 )
@@ -15,9 +14,10 @@ type MockEntryRepository struct {
 func (m MockEntryRepository) DeleteEntryByID(entryID uint, pe *models.ProjectWithEntries) error {
 	// entryID starts at 1, so we subtract 1 the index
 	//	SOFT DELETE
-	m.Entries[entryID-1].DeletedAt = time.Now()
-	if m.Entries[entryID-1].DeletedAt == nil {
-		// TODO: finish this function
+	if _, ok := m.Entries[entryID-1]; ok {
+		delete(m.Entries, entryID-1)
+	}
+	if _, ok := m.Entries[entryID-1]; ok {
 		return errors.New("unable to delete entry")
 	}
 	return nil
@@ -32,7 +32,7 @@ func (m MockEntryRepository) DeleteEntries(pe *models.ProjectWithEntries) error 
 	return nil
 }
 
-func (m MockEntryRepository) GetEntriesByProjectID(projectID uint) []models.Entry {
+func (m MockEntryRepository) GetEntriesByProjectID(projectID uint) ([]models.Entry, error) {
 	var entries []models.Entry
 	// db IDs start at 1 not 0 therefore also go to one above length of entries map
 	for i := 1; i <= len(m.Entries); i++ {
@@ -40,11 +40,11 @@ func (m MockEntryRepository) GetEntriesByProjectID(projectID uint) []models.Entr
 			entries = append(entries, *m.Entries[uint(i)])
 		}
 	}
-	return entries
+	return entries, nil
 }
 
 func (m MockEntryRepository) CreateEntry(message []byte, pe *models.ProjectWithEntries) error {
-	entry := &models.Entry{ID: uint(len(m.Entries) + 1), Message: string(message[:]), ProjectID: pe.Project.ID}
+	entry := &models.Entry{Message: string(message[:]), ProjectID: pe.Project.ID}
 	err := m.storeEntry(entry, pe)
 	return err
 }
