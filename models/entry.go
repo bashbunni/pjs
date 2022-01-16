@@ -1,8 +1,6 @@
 package models
 
 import (
-	"time"
-
 	"github.com/bashbunni/project-management/utils"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -10,11 +8,9 @@ import (
 
 type Entry struct {
 	gorm.Model
-	ID        uint
-	ProjectID uint // TODO: get rid of duplicate data
+	ProjectID uint `gorm:"foreignKey:Project"`
 	Project   Project
 	Message   string
-	DeletedAt time.Time
 }
 
 type EntryRepository interface {
@@ -28,7 +24,7 @@ type GormEntryRepository struct {
 	DB *gorm.DB
 }
 
-func (g GormEntryRepository) DeleteEntryByID(entryID uint, pe *ProjectWithEntries) error {
+func (g *GormEntryRepository) DeleteEntryByID(entryID uint, pe *ProjectWithEntries) error {
 	result := g.DB.Delete(&Entry{}, entryID)
 	resultErr := result.Error
 	if resultErr != nil {
@@ -41,18 +37,18 @@ func (g GormEntryRepository) DeleteEntryByID(entryID uint, pe *ProjectWithEntrie
 	return nil
 }
 
-func (g GormEntryRepository) DeleteEntries(pe *ProjectWithEntries) error {
+func (g *GormEntryRepository) DeleteEntries(pe *ProjectWithEntries) error {
 	result := g.DB.Where("project_id = ?", pe.Project.ID).Delete(&Entry{})
 	return result.Error
 }
 
-func (g GormEntryRepository) GetEntriesByProjectID(projectID uint) ([]Entry, error) {
+func (g *GormEntryRepository) GetEntriesByProjectID(projectID uint) ([]Entry, error) {
 	var Entries []Entry
 	result := g.DB.Where("project_id = ?", projectID).Find(&Entries)
 	return Entries, result.Error
 }
 
-func (g GormEntryRepository) CreateEntry(message []byte, pe *ProjectWithEntries) error {
+func (g *GormEntryRepository) CreateEntry(message []byte, pe *ProjectWithEntries) error {
 	entry := Entry{Message: string(message[:]), ProjectID: pe.Project.ID}
 	result := g.DB.Create(&entry)
 	pe.UpdateEntries(g)
