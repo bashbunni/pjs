@@ -115,7 +115,7 @@ func (g *GormProjectRepository) RenameProject(pe *ProjectWithEntries) {
 // TODO: move helper?
 // helpers
 
-func newProjectPrompt() string {
+func NewProjectPrompt() string {
 	var name string
 	fmt.Println("what would you like to name your project?")
 	fmt.Scanf("%s", &name)
