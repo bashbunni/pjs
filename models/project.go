@@ -3,7 +3,6 @@ package models
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -18,13 +17,12 @@ const notFound uint = 0
 type Project struct {
 	gorm.Model
 	Name      string
-	DeletedAt time.Time
 }
 
 // Create a new project instance.
 // DeletedAt defaults to the zero value for time.Time.
 func NewProject(id uint, name string) *Project {
-	return &Project{Name: name, DeletedAt: time.Time{}}
+	return &Project{Name: name}
 }
 
 // Implement list.Item for Bubbletea TUI
