@@ -14,7 +14,7 @@ import (
 )
 
 func controlSubcommands(db *gorm.DB) {
-	pr := models.GormProjectRepository{db}
+	pr := models.GormProjectRepository{DB: db}
 	projects := pr.GetAllProjects()
 	if len(projects) <= 1 {
 		pr.GetOrCreateProjectByID(1)
