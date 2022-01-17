@@ -74,5 +74,5 @@ func parseProjectID(input string, pr models.ProjectRepository) models.Project {
 	if err != nil {
 		log.Fatal(err)
 	}
-	return pr.GetOrCreateProjectByID(projectID)
+	return pr.GetOrCreateProjectByID(uint(projectID))
 }
