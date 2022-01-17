@@ -33,7 +33,7 @@ func (p Project) FilterValue() string { return p.Name }
 
 // Interface
 type ProjectRepository interface {
-	GetOrCreateProjectByID(projectID int) Project
+	GetOrCreateProjectByID(projectID uint) Project
 	PrintProjects()
 	hasProjects() bool
 	getProjectByID(projectId int) Project
@@ -48,7 +48,7 @@ type GormProjectRepository struct {
 	DB *gorm.DB
 }
 
-func (g *GormProjectRepository) GetOrCreateProjectByID(projectID int) Project {
+func (g *GormProjectRepository) GetOrCreateProjectByID(projectID uint) Project {
 	proj := g.getProjectByID(projectID)
 	if proj.ID == notFound {
 		return g.CreateProject("")
@@ -56,7 +56,7 @@ func (g *GormProjectRepository) GetOrCreateProjectByID(projectID int) Project {
 	return proj
 }
 
-func (g *GormProjectRepository) getProjectByID(projectID int) Project {
+func (g *GormProjectRepository) getProjectByID(projectID uint) Project {
 	var project Project
 	if err := g.DB.Where("id = ?", projectID).Find(&project).Error; err != nil {
 		log.Fatalf("Unable to get project by ID: %q", err)
@@ -81,7 +81,7 @@ func (g *GormProjectRepository) GetAllProjects() []Project {
 
 func (g *GormProjectRepository) CreateProject(name string) Project {
 	if name == "" {
-		name = newProjectPrompt()
+		name = NewProjectPrompt()
 	}
 	proj := Project{Name: name}
 	if err := g.DB.Create(&proj).Error; err != nil {
@@ -100,7 +100,7 @@ func (g *GormProjectRepository) DeleteProject(pe *ProjectWithEntries, er EntryRe
 
 // TODO: make pe's Project a *Project instead to simplify?
 func (g *GormProjectRepository) RenameProject(pe *ProjectWithEntries) {
-	name := newProjectPrompt()
+	name := NewProjectPrompt()
 	var project Project
 	if err := g.DB.Where("id = ?", pe.Project.ID).First(&project).Error; err != nil {
 		log.Fatalf("Unable to rename project: %q", err)
