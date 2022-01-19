@@ -1,37 +1,26 @@
 package mocks
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/bashbunni/project-management/models"
-	"github.com/bashbunni/project-management/utils"
 )
 
 type MockProjectRepository struct {
 	Projects map[uint]*models.Project
 }
 
-func (m MockProjectRepository) GetOrCreateProjectByID(projectID uint) models.Project {
-	proj, err := m.getProjectByID(projectID)
-	// make getProjectByID return 0 if not found
-	if errors.Is(err, utils.ErrProjectNotFound) {
-		return m.CreateProject("")
-	}
-	return proj
-}
-
-func (m MockProjectRepository) getProjectByID(projectID uint) (models.Project, error) {
+func (m MockProjectRepository) GetProjectByID(projectID uint) models.Project {
 	// make getProjectByID return 0 if not found
 	if project, ok := m.Projects[projectID]; ok {
-		return *project, nil
+		return *project 
 	}
-	return models.Project{}, utils.ErrProjectNotFound
+	return models.Project{}
 }
 
 func (m MockProjectRepository) PrintProjects() {
-	if m.hasProjects() {
-		projects := m.GetAllProjects()
+	if m.HasProjects() {
+		projects := m.GetAllProjects() // err is nil for mock
 		for _, project := range projects {
 			fmt.Printf(models.Format, project.ID, project.Name)
 		}
@@ -48,7 +37,7 @@ func (m MockProjectRepository) GetAllProjects() []models.Project {
 	return projects
 }
 
-func (m MockProjectRepository) hasProjects() bool {
+func (m MockProjectRepository) HasProjects() bool {
 	if len(m.Projects) > 0 {
 		return true
 	}

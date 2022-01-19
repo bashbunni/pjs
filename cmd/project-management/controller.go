@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strconv"
 
 	"github.com/bashbunni/project-management/frontend"
 	"github.com/bashbunni/project-management/models"
@@ -16,8 +15,9 @@ import (
 func controlSubcommands(db *gorm.DB) {
 	pr := models.GormProjectRepository{DB: db}
 	projects := pr.GetAllProjects()
-	if len(projects) <= 1 {
-		pr.GetOrCreateProjectByID(1)
+	if len(projects) < 1 {
+		name := models.NewProjectPrompt()
+		pr.CreateProject(name)
 	} else {
 		frontend.ChooseProject(projects)
 	}
@@ -67,12 +67,4 @@ func controlProjectCommand(pe *models.ProjectWithEntries, pr models.ProjectRepos
 	if *editProject {
 		pr.RenameProject(pe)
 	}
-}
-
-func parseProjectID(input string, pr models.ProjectRepository) models.Project {
-	projectID, err := strconv.Atoi(input)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return pr.GetOrCreateProjectByID(uint(projectID))
 }

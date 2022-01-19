@@ -1,22 +1,41 @@
-package main
+package tests
 
-import "testing"
+import (
+	"fmt"
+	"testing"
 
-func TestHelloWorld(t *testing.T) {
-	// t.Fatal("not implemented")
+	"github.com/bashbunni/project-management/mocks"
+	"github.com/bashbunni/project-management/models"
+)
+
+// func NewMock() {
+// 	db, mock, err := sqlmock.New()
+// 	if err != nil {
+// 		log.Fatalf("unable to open stub database: %v", err)
+// 	}
+// }
+
+func TestHasProjects(t *testing.T) {
+	var tests = []struct {
+		testname string
+		data models.ProjectRepository
+		want bool
+	}{
+		{"has projects", mocks.MockProjectRepository{Projects: map[uint]*models.Project{
+		1: &models.Project{Name: "project1"}, 
+		2: &models.Project{Name: "project2"},
+	}}, true},
+		{"no projects", mocks.MockProjectRepository{Projects: map[uint]*models.Project{}}, false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.testname, func(t *testing.T) {
+			got := tt.data.HasProjects()
+
+			if got != tt.want {
+				t.Errorf("got %t want %t", got, tt.want)
+			}	
+		})
+	}
 }
 
-/*
-TODO:
-Things to test:
-type ProjectRepository interface {
-	GetOrCreateProjectByID(projectID int) Project
-	PrintProjects()
-	hasProjects() bool
-	getProjectByID(projectId int) Project
-	GetAllProjects() ([]Project, error)
-	CreateProject(name string) Project
-	DeleteProject(pe *ProjectWithEntries, er EntryRepository)
-	RenameProject(pe *ProjectWithEntries)
-}
-*/

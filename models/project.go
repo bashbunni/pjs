@@ -7,10 +7,6 @@ import (
 	"gorm.io/gorm"
 )
 
-/*
-have a struct for each source of data: e.g. DB, []Project
-*/
-
 const notFound uint = 0
 
 // Entity
@@ -33,11 +29,10 @@ func (p Project) FilterValue() string { return p.Name }
 
 // Interface
 type ProjectRepository interface {
-	GetOrCreateProjectByID(projectID uint) Project
 	PrintProjects()
-	hasProjects() bool
-	getProjectByID(projectId int) Project
-	GetAllProjects() ([]Project, error)
+	HasProjects() bool
+	GetProjectByID(projectID uint) Project
+	GetAllProjects() []Project
 	CreateProject(name string) Project
 	DeleteProject(pe *ProjectWithEntries, er EntryRepository)
 	RenameProject(pe *ProjectWithEntries)
@@ -48,15 +43,7 @@ type GormProjectRepository struct {
 	DB *gorm.DB
 }
 
-func (g *GormProjectRepository) GetOrCreateProjectByID(projectID uint) Project {
-	proj := g.getProjectByID(projectID)
-	if proj.ID == notFound {
-		return g.CreateProject("")
-	}
-	return proj
-}
-
-func (g *GormProjectRepository) getProjectByID(projectID uint) Project {
+func (g *GormProjectRepository) GetProjectByID(projectID uint) Project {
 	var project Project
 	if err := g.DB.Where("id = ?", projectID).Find(&project).Error; err != nil {
 		log.Fatalf("Unable to get project by ID: %q", err)
@@ -79,10 +66,14 @@ func (g *GormProjectRepository) GetAllProjects() []Project {
 	return projects
 }
 
-func (g *GormProjectRepository) CreateProject(name string) Project {
-	if name == "" {
-		name = NewProjectPrompt()
+func (g *GormProjectRepository) HasProjects() bool {
+	if len(g.GetAllProjects()) == 0 {
+		return false
 	}
+	return true
+}
+
+func (g *GormProjectRepository) CreateProject(name string) Project {
 	proj := Project{Name: name}
 	if err := g.DB.Create(&proj).Error; err != nil {
 		log.Fatalf("Unable to create project: %q", err)
