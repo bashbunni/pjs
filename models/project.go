@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/bashbunni/project-management/utils"
 	"gorm.io/gorm"
 )
 
@@ -14,6 +15,8 @@ type Project struct {
 	gorm.Model
 	Name      string
 }
+
+// TODO: make all functions return errors for testability
 
 // Create a new project instance.
 // DeletedAt defaults to the zero value for time.Time.
@@ -31,11 +34,11 @@ func (p Project) FilterValue() string { return p.Name }
 type ProjectRepository interface {
 	PrintProjects()
 	HasProjects() bool
-	GetProjectByID(projectID uint) Project
-	GetAllProjects() []Project
-	CreateProject(name string) Project
-	DeleteProject(pe *ProjectWithEntries, er EntryRepository)
-	RenameProject(pe *ProjectWithEntries)
+	GetProjectByID(projectID uint) (Project, error)
+	GetAllProjects() ([]Project, error)
+	CreateProject(name string) (Project, error)
+	DeleteProject(projectID uint, er EntryRepository) error
+	RenameProject(projectID uint) error
 }
 
 // Gorm implementation
@@ -43,12 +46,12 @@ type GormProjectRepository struct {
 	DB *gorm.DB
 }
 
-func (g *GormProjectRepository) GetProjectByID(projectID uint) Project {
+func (g *GormProjectRepository) GetProjectByID(projectID uint) (Project, error) {
 	var project Project
 	if err := g.DB.Where("id = ?", projectID).Find(&project).Error; err != nil {
-		log.Fatalf("Unable to get project by ID: %q", err)
+		return project, utils.ErrProjectNotFound
 	}
-	return project
+	return project, nil
 }
 
 func (g *GormProjectRepository) PrintProjects() {
@@ -58,12 +61,12 @@ func (g *GormProjectRepository) PrintProjects() {
 	}
 }
 
-func (g *GormProjectRepository) GetAllProjects() []Project {
+func (g *GormProjectRepository) GetAllProjects() ([]Project, error) {
 	var projects []Project
 	if err := g.DB.Find(&projects).Error; err != nil {
-		log.Fatalf("Projects not found: %q", err)
+		return projects, utils.ErrEmptyTable
 	}
-	return projects
+	return projects, nil
 }
 
 func (g *GormProjectRepository) HasProjects() bool {
@@ -73,20 +76,22 @@ func (g *GormProjectRepository) HasProjects() bool {
 	return true
 }
 
-func (g *GormProjectRepository) CreateProject(name string) Project {
+
+func (g *GormProjectRepository) CreateProject(name string) (Project, error) {
 	proj := Project{Name: name}
 	if err := g.DB.Create(&proj).Error; err != nil {
-		log.Fatalf("Unable to create project: %q", err)
+		return proj, utils.ErrCannotCreateProject
 	}
-	return proj
+	return proj, nil
 }
 
 // TODO: check for cascade delete functionality for GORM
-func (g *GormProjectRepository) DeleteProject(pe *ProjectWithEntries, er EntryRepository) {
-	er.DeleteEntries(pe)
-	if err := g.DB.Delete(&Project{}, pe.Project.ID).Error; err != nil {
-		log.Fatalf("Unable to delete project: %q", err)
+func (g *GormProjectRepository) DeleteProject(projectID uint, er EntryRepository) error {
+	er.DeleteEntries(projectID)
+	if err := g.DB.Delete(&Project{}, projectID).Error; err != nil {
+		return utils.ErrCannotDeleteProject
 	}
+	return nil
 }
 
 // TODO: make pe's Project a *Project instead to simplify?

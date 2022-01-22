@@ -1,36 +1,34 @@
-package mocks
+package models
 
 import (
 	"fmt"
-
-	"github.com/bashbunni/project-management/models"
 )
 
 type MockProjectRepository struct {
-	Projects map[uint]*models.Project
+	Projects map[uint]*Project
 }
 
-func (m MockProjectRepository) GetProjectByID(projectID uint) models.Project {
+func (m MockProjectRepository) GetProjectByID(projectID uint) Project {
 	// make getProjectByID return 0 if not found
 	if project, ok := m.Projects[projectID]; ok {
 		return *project 
 	}
-	return models.Project{}
+	return Project{}
 }
 
 func (m MockProjectRepository) PrintProjects() {
 	if m.HasProjects() {
 		projects := m.GetAllProjects() // err is nil for mock
 		for _, project := range projects {
-			fmt.Printf(models.Format, project.ID, project.Name)
+			fmt.Printf(Format, project.ID, project.Name)
 		}
 	} else {
 		fmt.Printf("There are no projects available")
 	}
 }
 
-func (m MockProjectRepository) GetAllProjects() []models.Project {
-	var projects []models.Project
+func (m MockProjectRepository) GetAllProjects() []Project {
+	var projects []Project
 	for _, project := range m.Projects {
 		projects = append(projects, *project)
 	}
@@ -44,16 +42,16 @@ func (m MockProjectRepository) HasProjects() bool {
 	return false
 }
 
-func (m MockProjectRepository) CreateProject(name string) models.Project {
+func (m MockProjectRepository) CreateProject(name string) Project {
 	if name == "" {
-		name = models.NewProjectPrompt()
+		name = NewProjectPrompt()
 	}
-	proj := &models.Project{Name: name}
+	proj := &Project{Name: name}
 	m.Projects[proj.ID] = proj
 	return *proj
 }
 
-func (m MockProjectRepository) DeleteProject(pe *models.ProjectWithEntries, er models.EntryRepository) {
+func (m MockProjectRepository) DeleteProject(pe *ProjectWithEntries, er EntryRepository) {
 	// what if projectID does not exist?
 	if _, ok := m.Projects[pe.Project.ID]; ok {
 		delete(m.Projects, pe.Project.ID)
@@ -61,8 +59,8 @@ func (m MockProjectRepository) DeleteProject(pe *models.ProjectWithEntries, er m
 	er.DeleteEntries(pe)
 }
 
-func (m MockProjectRepository) RenameProject(pe *models.ProjectWithEntries) {
-	name := models.NewProjectPrompt()
+func (m MockProjectRepository) RenameProject(pe *ProjectWithEntries) {
+	name := NewProjectPrompt()
 	if project, ok := m.Projects[pe.Project.ID]; ok {
 		project.Name = name
 	}
