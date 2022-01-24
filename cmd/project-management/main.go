@@ -35,11 +35,5 @@ func OpenSqlite() *gorm.DB {
 
 func main() {
 	db := OpenSqlite()
-	fmt.Println("entered main")
-	gp := models.GormProjectRepository{DB: db}
-	fmt.Println(gp.GetAllProjects())
-	var projects []models.Project
-	db.Raw("SELECT * FROM projects").Scan(&projects)
-	fmt.Println(projects)
 	controlSubcommands(db)
 }
