@@ -16,8 +16,6 @@ type Project struct {
 	Name      string
 }
 
-// TODO: make all functions return errors for testability
-
 // Create a new project instance.
 // DeletedAt defaults to the zero value for time.Time.
 func NewProject(id uint, name string) *Project {
@@ -55,7 +53,10 @@ func (g *GormProjectRepository) GetProjectByID(projectID uint) (Project, error) 
 }
 
 func (g *GormProjectRepository) PrintProjects() {
-	projects := g.GetAllProjects()
+	projects, err := g.GetAllProjects()
+	if err != nil {
+		log.Fatal(err)
+	}
 	for _, project := range projects {
 		fmt.Printf(Format, project.ID, project.Name)
 	}
@@ -70,7 +71,7 @@ func (g *GormProjectRepository) GetAllProjects() ([]Project, error) {
 }
 
 func (g *GormProjectRepository) HasProjects() bool {
-	if len(g.GetAllProjects()) == 0 {
+	if projects, _ := g.GetAllProjects(); len(projects) == 0 {
 		return false
 	}
 	return true
@@ -86,8 +87,7 @@ func (g *GormProjectRepository) CreateProject(name string) (Project, error) {
 }
 
 // TODO: check for cascade delete functionality for GORM
-func (g *GormProjectRepository) DeleteProject(projectID uint, er EntryRepository) error {
-	er.DeleteEntries(projectID)
+func (g *GormProjectRepository) DeleteProject(projectID uint) error {
 	if err := g.DB.Delete(&Project{}, projectID).Error; err != nil {
 		return utils.ErrCannotDeleteProject
 	}
@@ -95,15 +95,14 @@ func (g *GormProjectRepository) DeleteProject(projectID uint, er EntryRepository
 }
 
 // TODO: make pe's Project a *Project instead to simplify?
-func (g *GormProjectRepository) RenameProject(pe *ProjectWithEntries) {
+func (g *GormProjectRepository) RenameProject(project *Project) {
 	name := NewProjectPrompt()
-	var project Project
-	if err := g.DB.Where("id = ?", pe.Project.ID).First(&project).Error; err != nil {
+	var newProject Project
+	if err := g.DB.Where("id = ?", project.ID).First(&newProject).Error; err != nil {
 		log.Fatalf("Unable to rename project: %q", err)
 	}
-	project.Name = name
-	pe.Project.Name = name
-	if err := g.DB.Save(&project).Error; err != nil {
+	newProject.Name = name
+	if err := g.DB.Save(&newProject).Error; err != nil {
 		log.Fatalf("Unable to save project: %q", err)
 	}
 }
