@@ -17,24 +17,23 @@ func projectPrompt(pr models.ProjectRepository) models.Project {
 	fmt.Scanf("%d", &input)
 	// read in input + assign to project
 	fmt.Printf("selection is %d \n", input)
-	return pr.CreateProject("")
+	newproject, err := pr.CreateProject("")
+	if err != nil {
+		log.Fatal(err)
+	}
+	return newproject
 }
 
-func OpenSqlite() (*gorm.DB, error) {
-	return gorm.Open(sqlite.Open("new.db"), &gorm.Config{})
-}
-
-func main() {
-	db, err := OpenSqlite()
+func OpenSqlite() *gorm.DB {
+	db, err :=  gorm.Open(sqlite.Open("new.db"), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("unable to open database: %v", err)
 	}
 	db.AutoMigrate(&models.Entry{}, &models.Project{})
-	fmt.Println("entered main")
-	gp := models.GormProjectRepository{DB: db}
-	fmt.Println(gp.GetAllProjects())
-	var projects []models.Project
-	db.Raw("SELECT * FROM projects").Scan(&projects)
-	fmt.Println(projects)
+	return db
+}
+
+func main() {
+	db := OpenSqlite()
 	controlSubcommands(db)
 }

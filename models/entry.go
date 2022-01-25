@@ -14,31 +14,27 @@ type Entry struct {
 }
 
 type EntryRepository interface {
-	DeleteEntryByID(entryID uint, pe *ProjectWithEntries) error
-	DeleteEntries(pe *ProjectWithEntries) error
+	DeleteEntryByID(entryID uint) error
+	DeleteEntries(projectID uint) error
 	GetEntriesByProjectID(projectID uint) ([]Entry, error)
-	CreateEntry(message []byte, pe *ProjectWithEntries) error
+	CreateEntry(message []byte, projectID uint) error
 }
 
 type GormEntryRepository struct {
 	DB *gorm.DB
 }
 
-func (g *GormEntryRepository) DeleteEntryByID(entryID uint, pe *ProjectWithEntries) error {
+func (g *GormEntryRepository) DeleteEntryByID(entryID uint) error {
 	result := g.DB.Delete(&Entry{}, entryID)
 	resultErr := result.Error
 	if resultErr != nil {
 		return errors.Wrap(resultErr, utils.CannotDeleteEntry)
 	}
-	err := pe.UpdateEntries(g)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
-func (g *GormEntryRepository) DeleteEntries(pe *ProjectWithEntries) error {
-	result := g.DB.Where("project_id = ?", pe.Project.ID).Delete(&Entry{})
+func (g *GormEntryRepository) DeleteEntries(projectID uint) error {
+	result := g.DB.Where("project_id = ?", projectID).Delete(&Entry{})
 	return result.Error
 }
 
@@ -48,9 +44,8 @@ func (g *GormEntryRepository) GetEntriesByProjectID(projectID uint) ([]Entry, er
 	return Entries, result.Error
 }
 
-func (g *GormEntryRepository) CreateEntry(message []byte, pe *ProjectWithEntries) error {
-	entry := Entry{Message: string(message[:]), ProjectID: pe.Project.ID}
+func (g *GormEntryRepository) CreateEntry(message []byte, projectID uint) error {
+	entry := Entry{Message: string(message[:]), ProjectID: projectID}
 	result := g.DB.Create(&entry)
-	pe.UpdateEntries(g)
 	return result.Error
 }

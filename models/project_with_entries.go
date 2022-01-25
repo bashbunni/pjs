@@ -26,11 +26,3 @@ func CreateProjectWithEntries(project Project, er EntryRepository) (*ProjectWith
 	return &ProjectWithEntries{project, entries}, nil
 }
 
-func (pe *ProjectWithEntries) UpdateEntries(er EntryRepository) error {
-	result, err := er.GetEntriesByProjectID(pe.Project.ID)
-	if err != nil {
-		return errors.Wrap(err, utils.CannotUpdateEntries)
-	}
-	pe.Entries = result
-	return nil
-}

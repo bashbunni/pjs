@@ -7,7 +7,10 @@ need to implement func Error() string for it to implement Error interface
 */
 
 var (
+	ErrEmptyTable = errors.New("empty table")
 	ErrProjectNotFound  = errors.New("project not found")
+	ErrCannotCreateProject  = errors.New("cannot create project")
+	ErrCannotDeleteProject = errors.New("cannot delete project")
 	ErrEntryNotFound    = errors.New("entry not found")
 	ErrCannotCreateFile = errors.New("cannot create file")
 	ErrCannotOpenEditor = errors.New("cannot open editor")
