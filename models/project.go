@@ -23,7 +23,6 @@ func NewProject(id uint, name string) *Project {
 }
 
 // Implement list.Item for Bubbletea TUI
-// TODO: change this
 func (p Project) Title() string       { return p.Name }
 func (p Project) Description() string { return fmt.Sprintf("%d", p.ID) }
 func (p Project) FilterValue() string { return p.Name }
@@ -46,8 +45,8 @@ type GormProjectRepository struct {
 
 func (g *GormProjectRepository) GetProjectByID(projectID uint) (Project, error) {
 	var project Project
-	if err := g.DB.Where("id = ?", projectID).Find(&project).Error; err != nil {
-		return project, utils.ErrProjectNotFound
+	if err := g.DB.Where("id = ?", projectID).First(&project).Error; err != nil {
+		return project, err
 	}
 	return project, nil
 }

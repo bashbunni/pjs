@@ -32,10 +32,12 @@ func TestCreateProjectForEmptyDB(t *testing.T) {
 	pr.CreateProject("hello")
 	pr.CreateProject("world")
 
-	got, err := pr.GetAllProjects()
+	got, _ := pr.GetAllProjects()
 	want := []Project{{Name: "hello"}, {Name: "world"}}
-	if reflect.DeepEqual(got, want) && err == nil {
-		t.Error("did not get correct project list")
+	for i := range want {
+		if got[i].Name != want[i].Name {
+			t.Errorf("got %s want %s", got[i].Name, want[i].Name)
+		}
 	}
 }
 
@@ -85,10 +87,12 @@ func TestGetTwoProjects(t *testing.T) {
 	pr.CreateProject("hello")
 	pr.CreateProject("world")
 
-	got, err := pr.GetAllProjects()
+	got, _ := pr.GetAllProjects()
 	want := []Project{{Name: "hello"}, {Name: "world"}}
-	if reflect.DeepEqual(got, want) && err != nil {
-		t.Error("did not get correct project list")
+	for i := range want {
+		if got[i].Name != want[i].Name {
+			t.Errorf("got %s want %s", got[i].Name, want[i].Name)
+		}
 	}
 }
 
@@ -99,8 +103,8 @@ func TestGetProjectFromEmptyDB(t *testing.T) {
 	pr := GormProjectRepository{DB: db}
 
 	_, err := pr.GetProjectByID(1)
-	if err == nil {
-		t.Errorf("project should be empty")
+	if err != gorm.ErrRecordNotFound {
+		t.Error("expected to get ErrRecordNotFound")
 	}
 }
 
@@ -111,6 +115,10 @@ func TestGetProjectFromNonEmptyDB(t *testing.T) {
 	pr.CreateProject("hello")
 	pr.CreateProject("world")
 
-	pr.GetProjectByID(1)
+	got, err := pr.GetProjectByID(1)
+	want := Project{Name: "hello"}
+	if err != nil || reflect.DeepEqual(got, want) {
+		t.Errorf("got %s want %s. err == %v", got.Name, want.Name, err)
+	}
 }
 
