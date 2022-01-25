@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/bashbunni/project-management/models"
+	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -22,7 +23,14 @@ func (i item) FilterValue() string { return i.title }
 
 // implements tea.Model (Init, Update, View)
 type model struct {
-	list list.Model
+	projects list.Model
+	keymap keymap
+}
+
+type keymap struct {
+	create key.Binding
+	rename key.Binding
+	delete key.Binding
 }
 
 func (m model) Init() tea.Cmd {
@@ -33,28 +41,51 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "ctrl+c" {
-			return m, nil
+			return m, tea.Quit
 		}
 	case tea.WindowSizeMsg:
 		top, right, bottom, left := docStyle.GetMargin()
-		m.list.SetSize(msg.Width-left-right, msg.Height-top-bottom)
+		m.projects.SetSize(msg.Width-left-right, msg.Height-top-bottom)
 	}
 
 	var cmd tea.Cmd
-	m.list, cmd = m.list.Update(msg)
+	m.projects, cmd = m.projects.Update(msg)
 	return m, cmd
 }
 
 func (m model) View() string {
-	return docStyle.Render(m.list.View())
+	return docStyle.Render(m.projects.View())
 }
+
+// functions
 
 func ChooseProject(projects []models.Project) {
 	items := projectsToItems(projects)
 	items = append(items, item{title: "Create Project", desc: "create and open a new project"})
-	// TODO: open as new project after creation
-	m := model{list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0)}
-	m.list.Title = "Projects"
+	m := model{projects: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), keymap: 
+	keymap{
+		create: key.NewBinding(
+			key.WithKeys("c"),
+			key.WithHelp("c", "create"),
+		),
+		rename: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "rename"),
+		),	
+		delete: key.NewBinding(
+			key.WithKeys("d"),
+			key.WithHelp("d", "delete"),
+		),
+	},
+}
+	m.projects.Title = "Projects"
+	m.projects.AdditionalShortHelpKeys = func() []key.Binding {
+		return []key.Binding{
+			m.keymap.create,
+			m.keymap.rename,
+			m.keymap.delete,
+		}
+	}
 
 	p := tea.NewProgram(m)
 	p.EnterAltScreen()
