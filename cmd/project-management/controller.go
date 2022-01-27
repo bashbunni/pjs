@@ -18,7 +18,7 @@ func controlSubcommands(db *gorm.DB) {
 		name := models.NewProjectPrompt()
 		pr.CreateProject(name)
 	} else {
-		frontend.ChooseProject(projects)
+		frontend.ChooseProject(pr, models.GormEntryRepository{DB: db})
 	}
 }
 
