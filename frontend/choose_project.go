@@ -27,7 +27,7 @@ func (i item) FilterValue() string { return i.title }
 
 // implements tea.Model (Init, Update, View)
 type model struct {
-	projects list.Model
+	projects list.Model 
 	// TODO: check if this is already happening with list.Model
 	active models.Project
 	pr *models.GormProjectRepository
@@ -88,7 +88,7 @@ func (m model) View() string {
 
 // functions
 
-// TODO: change this to EntryRepository
+// Initial model (AKA first View)
 func ChooseProject(pr models.GormProjectRepository, er models.GormEntryRepository) {
 	projects, err := pr.GetAllProjects()
 	if err != nil {
@@ -134,33 +134,6 @@ func ChooseProject(pr models.GormProjectRepository, er models.GormEntryRepositor
 	}
 }
 
-// TODO: are these necessary
-type updateEntryListMsg struct {
-	entries []models.Entry
-}
-type errMsg struct {error}
-
-func updateEntryListCmd(activeProject int, er *models.GormEntryRepository) tea.Cmd {
-	return func() tea.Msg {
-		entries, err := er.GetEntriesByProjectID(uint(activeProject+1))
-		log.Println(len(entries))
-		if err != nil {
-			return errMsg{err}
-		}
-		return updateEntryListMsg{entries}
-	}
-}
-
-
-func createEntryCmd(activeProject int, er *models.GormEntryRepository) tea.Cmd {
-	return func() tea.Msg {
-		err := er.CreateEntry([]byte("hello"), uint(activeProject+1))
-		if err != nil {
-			return errMsg{err}
-		}
-		return updateEntryListCmd(activeProject, er)
-	}
-}
 
 // convert []model.Project to []list.Item
 func projectsToItems(projects []models.Project) []list.Item {
