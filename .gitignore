@@ -3,3 +3,4 @@ new.db
 bin/
 *.md
 *.pdf
+cmd/project-management/debug.log
