@@ -28,7 +28,7 @@ func (i item) FilterValue() string { return i.title }
 
 // implements tea.Model (Init, Update, View)
 type model struct {
-	projects list.Model 
+	list list.Model 
 	input textinput.Model
 	active models.Project
 	pr *models.GormProjectRepository
@@ -61,13 +61,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				title: fmt.Sprintf("%d", e.ID),
 			})
 		}
- 	case createProjectListMsg:
- 		projects, err := m.pr.GetAllProjects()
- 		m.projects = list.NewModel(projectsToItems(projects), list.NewDefaultDelegate(), 0, 0)
- 		if err != nil {
-			m.err = err
-			// TODO: have this display in status-bar in View
- 		}
 	case tea.KeyMsg:
 		if !m.input.Focused() { 
 			switch {
@@ -96,10 +89,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		top, right, bottom, left := docStyle.GetMargin()
-		m.projects.SetSize(msg.Width-left-right, msg.Height-top-bottom)
+		m.list.SetSize(msg.Width-left-right, msg.Height-top-bottom-1)
 	}
 
-	m.projects, cmd = m.projects.Update(msg)
+	m.list, cmd = m.list.Update(msg)
 	cmds = append(cmds, cmd)
 	m.input, cmd = m.input.Update(msg)
 	cmds = append(cmds, cmd)
@@ -107,19 +100,26 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return docStyle.Render(m.projects.View() + "\n" + m.input.View())
+	return docStyle.Render(m.list.View() + "\n" + m.input.View())
 }
 
 // functions
 
 // Initial model (AKA first View)
 func ChooseProject(pr models.GormProjectRepository, er models.GormEntryRepository) {
+	input := textinput.New()
+	input.Prompt = "$ "
+	input.Placeholder = "Project name..."
+	input.CharLimit = 250
+	input.Width = 50
+
+	
 	projects, err := pr.GetAllProjects()
 	if err != nil {
 		log.Fatal(err)
 	}
 	items := projectsToItems(projects)
-	m := model{projects: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), pr: &pr, er: &er, keymap: 
+	m := model{list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), input: input, pr: &pr, er: &er, keymap: 
 	keymap{
 		create: key.NewBinding(
 			key.WithKeys("c"),
@@ -138,16 +138,15 @@ func ChooseProject(pr models.GormProjectRepository, er models.GormEntryRepositor
 			key.WithHelp("d", "delete"),
 		),
 	},
-}
-	m.projects.Title = "Projects"
-	m.projects.AdditionalShortHelpKeys = func() []key.Binding {
+	}
+	m.list.Title = "projects"
+	m.list.AdditionalShortHelpKeys = func() []key.Binding {
 		return []key.Binding{
 			m.keymap.create,
 			m.keymap.rename,
 			m.keymap.delete,
 		}
 	}
-
 	tea.LogToFile("debug.log", "debug")
 	p := tea.NewProgram(m)
 	p.EnterAltScreen()
