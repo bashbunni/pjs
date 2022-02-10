@@ -8,6 +8,7 @@ import (
 	"github.com/bashbunni/project-management/models"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -28,11 +29,13 @@ func (i item) FilterValue() string { return i.title }
 // implements tea.Model (Init, Update, View)
 type model struct {
 	projects list.Model 
-	// TODO: check if this is already happening with list.Model
+	input textinput.Model
 	active models.Project
 	pr *models.GormProjectRepository
 	er *models.GormEntryRepository
 	keymap keymap
+	editing bool
+	err error
 }
 
 type keymap struct {
@@ -47,6 +50,9 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+	var cmd tea.Cmd
+
 	switch msg := msg.(type) {
 	case updateEntryListMsg:
 		entries := make([]list.Item, 0, len(msg.entries))
@@ -55,21 +61,37 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				title: fmt.Sprintf("%d", e.ID),
 			})
 		}
+ 	case createProjectListMsg:
+ 		projects, err := m.pr.GetAllProjects()
+ 		m.projects = list.NewModel(projectsToItems(projects), list.NewDefaultDelegate(), 0, 0)
+ 		if err != nil {
+			m.err = err
+			// TODO: have this display in status-bar in View
+ 		}
 	case tea.KeyMsg:
-		switch {
-			case key.Matches(msg, m.keymap.create):
-			// TODO: create project
-				return m, createEntryCmd(m.projects.Cursor(), m.er)
-			case msg.String() == "ctrl+c":
-				return m, tea.Quit
-			case key.Matches(msg, m.keymap.enter):
-				return m, updateEntryListCmd(m.projects.Cursor(), m.er)
-			case key.Matches(msg, m.keymap.rename):
-				// TODO: rename project
-				return m, nil
-			case key.Matches(msg, m.keymap.delete):
-				// TODO: delete project
-				return m, nil
+		if !m.input.Focused() { 
+			switch {
+				case key.Matches(msg, m.keymap.create):
+					m.input.Focus()
+					cmds = append(cmds, textinput.Blink)
+				case msg.String() == "ctrl+c":
+					return m, tea.Quit
+				case key.Matches(msg, m.keymap.enter):
+					// TODO: update list
+					return m, nil
+				case key.Matches(msg, m.keymap.rename):
+					// TODO: rename project
+					return m, nil
+				case key.Matches(msg, m.keymap.delete):
+					// TODO: delete project
+					return m, nil
+			}
+		}
+		if m.input.Focused() {
+			if key.Matches(msg, m.keymap.enter) {
+				createProjectCmd(m.input.Value(), m.pr)
+				m.input.Blur()
+			}
 		}
 
 	case tea.WindowSizeMsg:
@@ -77,13 +99,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.projects.SetSize(msg.Width-left-right, msg.Height-top-bottom)
 	}
 
-	var cmd tea.Cmd
 	m.projects, cmd = m.projects.Update(msg)
-	return m, cmd
+	cmds = append(cmds, cmd)
+	m.input, cmd = m.input.Update(msg)
+	cmds = append(cmds, cmd)
+	return m, tea.Batch(cmds...)
 }
 
 func (m model) View() string {
-	return docStyle.Render(m.projects.View())
+	return docStyle.Render(m.projects.View() + "\n" + m.input.View())
 }
 
 // functions
@@ -133,7 +157,6 @@ func ChooseProject(pr models.GormProjectRepository, er models.GormEntryRepositor
 		os.Exit(1)
 	}
 }
-
 
 // convert []model.Project to []list.Item
 func projectsToItems(projects []models.Project) []list.Item {

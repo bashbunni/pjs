@@ -20,14 +20,14 @@ func updateEntryListCmd(activeProject int, er *models.GormEntryRepository) tea.C
 
 // open a dialogue to enter project name
 
-func createProjectCmd(name string) {
-/* TODO:
-- hit c -> creates a new empty project
-- hit enter -> saves the project
-	- write to DB
-- close typing dialogue and refresh list of projects
-	- show a new view
-*/
+func createProjectCmd(name string, pr *models.GormProjectRepository) tea.Cmd {
+	return func() tea.Msg {
+		project, err := pr.CreateProject(name)
+		if err != nil {
+			return errMsg{err}
+		}
+		return createProjectListMsg{project}
+	}
 }
 
 // TODO: implement
