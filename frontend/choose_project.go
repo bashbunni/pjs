@@ -13,8 +13,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// TODO: track selected project
-// TODO: render list of entries
+// TODO: render list of entries -> need to update m.list with entries instead of projects and change title to proj name
 
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
 
