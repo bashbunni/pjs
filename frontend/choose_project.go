@@ -42,6 +42,7 @@ type keymap struct {
 	enter key.Binding
 	rename key.Binding
 	delete key.Binding
+	escape key.Binding
 }
 
 func (m model) Init() tea.Cmd {
@@ -151,6 +152,10 @@ func ChooseProject(pr models.GormProjectRepository, er models.GormEntryRepositor
 			key.WithKeys("d"),
 			key.WithHelp("d", "delete"),
 		),
+		escape: key.NewBinding(
+			key.WithKeys("esc"),
+			key.WithHelp("esc", "back"),
+		),
 	},
 	}
 	m.list.Title = "projects"
@@ -159,6 +164,7 @@ func ChooseProject(pr models.GormProjectRepository, er models.GormEntryRepositor
 			m.keymap.create,
 			m.keymap.rename,
 			m.keymap.delete,
+			m.keymap.escape,
 		}
 	}
 	tea.LogToFile("debug.log", "debug")
