@@ -54,12 +54,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case updateEntryListMsg:
+		// TODO: make this work?
 		entries := make([]list.Item, 0, len(msg.entries))
 		for _, e := range msg.entries {
 			entries = append(entries, item{
 				title: fmt.Sprintf("%d", e.ID),
 			})
 		}
+	case createProjectListMsg:
+		// update m.list to incl new project -> refresh the view
+		log.Println(msg.project)
+		projects, err := m.pr.GetAllProjects()
+		if err != nil {
+			log.Fatal(err)
+		}
+		items := projectsToItems(projects)
+		m.list.SetItems(items)
 	case tea.KeyMsg:
 		if !m.input.Focused() { 
 			switch {
@@ -81,7 +91,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if m.input.Focused() {
 			if key.Matches(msg, m.keymap.enter) {
-				createProjectCmd(m.input.Value(), m.pr)
+				cmds = append(cmds, createProjectCmd(m.input.Value(), m.pr))
+				m.input.SetValue("") 
+				m.input.Blur()
+			}
+			if key.Matches(msg, m.keymap.escape) {
+				m.input.SetValue("") 
 				m.input.Blur()
 			}
 		}
