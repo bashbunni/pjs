@@ -8,6 +8,10 @@ type updateEntryListMsg struct {
 type errMsg struct {error}
 // TODO: have this implement Error()
 
+// project
+
 type createProjectListMsg struct {
 	project models.Project
 }
+
+type renameProjectMsg struct {}

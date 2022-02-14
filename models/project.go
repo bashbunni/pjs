@@ -94,10 +94,9 @@ func (g *GormProjectRepository) DeleteProject(projectID uint) error {
 }
 
 // TODO: make pe's Project a *Project instead to simplify?
-func (g *GormProjectRepository) RenameProject(project *Project) {
-	name := NewProjectPrompt()
+func (g *GormProjectRepository) RenameProject(id uint, name string) {
 	var newProject Project
-	if err := g.DB.Where("id = ?", project.ID).First(&newProject).Error; err != nil {
+	if err := g.DB.Where("id = ?", id).First(&newProject).Error; err != nil {
 		log.Fatalf("Unable to rename project: %q", err)
 	}
 	newProject.Name = name

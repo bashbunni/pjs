@@ -14,6 +14,7 @@ import (
 )
 
 // TODO: render list of entries -> need to update m.list with entries instead of projects and change title to proj name
+// TODO: stop cursor from moving in edit mode -> override list.Model
 
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
 
@@ -29,11 +30,10 @@ func (i item) FilterValue() string { return i.title }
 type model struct {
 	list list.Model 
 	input textinput.Model
-	active models.Project
 	pr *models.GormProjectRepository
 	er *models.GormEntryRepository
 	keymap keymap
-	editing bool
+	mode string
 	err error
 }
 
@@ -63,19 +63,28 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			})
 		}
 	case createProjectListMsg:
-		// update m.list to incl new project -> refresh the view
-		log.Println(msg.project)
 		projects, err := m.pr.GetAllProjects()
 		if err != nil {
 			log.Fatal(err)
 		}
 		items := projectsToItems(projects)
 		m.list.SetItems(items)
+		m.mode = ""
+	case renameProjectMsg:
+		projects, err := m.pr.GetAllProjects()
+		if err != nil {
+			log.Fatal(err)
+		}
+		items := projectsToItems(projects)
+		m.list.SetItems(items)
+		m.mode = ""
+
 	case tea.KeyMsg:
 		if !m.input.Focused() { 
 			switch {
 				case key.Matches(msg, m.keymap.create):
 					m.input.Focus()
+					m.mode = "create"
 					cmds = append(cmds, textinput.Blink)
 				case msg.String() == "ctrl+c":
 					return m, tea.Quit
@@ -83,8 +92,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					// TODO: update list
 					return m, nil
 				case key.Matches(msg, m.keymap.rename):
-					// TODO: rename project
-					return m, nil
+					m.input.Focus()
+					m.mode = "edit"
+					cmds = append(cmds, textinput.Blink)
 				case key.Matches(msg, m.keymap.delete):
 					// TODO: delete project
 					return m, nil
@@ -92,12 +102,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		if m.input.Focused() {
 			if key.Matches(msg, m.keymap.enter) {
-				cmds = append(cmds, createProjectCmd(m.input.Value(), m.pr))
+				if m.mode == "create" {
+					cmds = append(cmds, createProjectCmd(m.input.Value(), m.pr))
+				}
+				if m.mode == "edit" {
+					cmds = append(cmds, renameProjectCmd(uint(m.list.Index()+1), m.pr, m.input.Value()))
+				}
 				m.input.SetValue("") 
+				m.mode = ""
 				m.input.Blur()
 			}
 			if key.Matches(msg, m.keymap.back) {
 				m.input.SetValue("") 
+				m.mode = ""
 				m.input.Blur()
 			}
 		}

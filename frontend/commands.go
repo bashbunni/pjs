@@ -18,7 +18,7 @@ func updateEntryListCmd(activeProject int, er *models.GormEntryRepository) tea.C
 	}
 }
 
-// open a dialogue to enter project name
+// projects
 
 func createProjectCmd(name string, pr *models.GormProjectRepository) tea.Cmd {
 	return func() tea.Msg {
@@ -29,6 +29,15 @@ func createProjectCmd(name string, pr *models.GormProjectRepository) tea.Cmd {
 		return createProjectListMsg{project}
 	}
 }
+
+func renameProjectCmd(id uint, pr *models.GormProjectRepository, name string) tea.Cmd {
+	return func() tea.Msg {
+		pr.RenameProject(id, name)
+		return renameProjectMsg{}
+	}
+}
+
+// entries
 
 // TODO: implement
 func createEntryCmd(activeProject int, er *models.GormEntryRepository) tea.Cmd {
