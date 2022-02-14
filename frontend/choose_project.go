@@ -42,7 +42,7 @@ type keymap struct {
 	enter key.Binding
 	rename key.Binding
 	delete key.Binding
-	escape key.Binding
+	back key.Binding
 }
 
 func (m model) Init() tea.Cmd {
@@ -96,7 +96,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.input.SetValue("") 
 				m.input.Blur()
 			}
-			if key.Matches(msg, m.keymap.escape) {
+			if key.Matches(msg, m.keymap.back) {
 				m.input.SetValue("") 
 				m.input.Blur()
 			}
@@ -152,9 +152,9 @@ func ChooseProject(pr models.GormProjectRepository, er models.GormEntryRepositor
 			key.WithKeys("d"),
 			key.WithHelp("d", "delete"),
 		),
-		escape: key.NewBinding(
-			key.WithKeys("esc"),
-			key.WithHelp("esc", "back"),
+		back: key.NewBinding(
+			key.WithKeys("left"),
+			key.WithHelp("left", "back"),
 		),
 	},
 	}
@@ -164,7 +164,7 @@ func ChooseProject(pr models.GormProjectRepository, er models.GormEntryRepositor
 			m.keymap.create,
 			m.keymap.rename,
 			m.keymap.delete,
-			m.keymap.escape,
+			m.keymap.back,
 		}
 	}
 	tea.LogToFile("debug.log", "debug")
