@@ -83,8 +83,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !m.input.Focused() { 
 			switch {
 				case key.Matches(msg, m.keymap.create):
-					m.input.Focus()
 					m.mode = "create"
+					m.input.Focus()
 					cmds = append(cmds, textinput.Blink)
 				case msg.String() == "ctrl+c":
 					return m, tea.Quit
@@ -92,13 +92,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					// TODO: update list
 					return m, nil
 				case key.Matches(msg, m.keymap.rename):
-					m.input.Focus()
 					m.mode = "edit"
+					m.input.Focus()
 					cmds = append(cmds, textinput.Blink)
 				case key.Matches(msg, m.keymap.delete):
 					// TODO: delete project
 					return m, nil
 			}
+			m.list, cmd = m.list.Update(msg)
+			cmds = append(cmds, cmd)
 		}
 		if m.input.Focused() {
 			if key.Matches(msg, m.keymap.enter) {
@@ -117,6 +119,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.mode = ""
 				m.input.Blur()
 			}
+			// only log keypresses for the input field when it's focused
+			m.input, cmd = m.input.Update(msg)
+			cmds = append(cmds, cmd)
 		}
 
 	case tea.WindowSizeMsg:
@@ -124,10 +129,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.list.SetSize(msg.Width-left-right, msg.Height-top-bottom-1)
 	}
 
-	m.list, cmd = m.list.Update(msg)
-	cmds = append(cmds, cmd)
-	m.input, cmd = m.input.Update(msg)
-	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
 
