@@ -79,6 +79,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.mode = ""
 
 	case tea.KeyMsg:
+		if m.input.Focused() {
+			if key.Matches(msg, m.keymap.enter) {
+				if m.mode == "create" {
+					cmds = append(cmds, createProjectCmd(m.input.Value(), m.pr))
+				}
+				if m.mode == "edit" {
+					items := m.list.Items()
+					activeItem := items[m.list.Index()]
+					cmds = append(cmds, renameProjectCmd(activeItem.(models.Project).ID, m.pr, m.input.Value()))
+				}
+				m.input.SetValue("") 
+				m.mode = ""
+				m.input.Blur()
+			}
+			if key.Matches(msg, m.keymap.back) {
+				m.input.SetValue("") 
+				m.mode = ""
+				m.input.Blur()
+			}
+			// only log keypresses for the input field when it's focused
+			m.input, cmd = m.input.Update(msg)
+			cmds = append(cmds, cmd)
+		}
+
 		if !m.input.Focused() { 
 			switch {
 				case key.Matches(msg, m.keymap.create):
@@ -95,31 +119,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.input.Focus()
 					cmds = append(cmds, textinput.Blink)
 				case key.Matches(msg, m.keymap.delete):
-					// TODO: delete project
-					return m, nil
+					items := m.list.Items()
+					activeItem := items[m.list.Index()]
+					cmds = append(cmds, deleteProjectCmd(activeItem.(models.Project).ID, m.pr))
 			}
 			m.list, cmd = m.list.Update(msg)
-			cmds = append(cmds, cmd)
-		}
-		if m.input.Focused() {
-			if key.Matches(msg, m.keymap.enter) {
-				if m.mode == "create" {
-					cmds = append(cmds, createProjectCmd(m.input.Value(), m.pr))
-				}
-				if m.mode == "edit" {
-					cmds = append(cmds, renameProjectCmd(uint(m.list.Index()+1), m.pr, m.input.Value()))
-				}
-				m.input.SetValue("") 
-				m.mode = ""
-				m.input.Blur()
-			}
-			if key.Matches(msg, m.keymap.back) {
-				m.input.SetValue("") 
-				m.mode = ""
-				m.input.Blur()
-			}
-			// only log keypresses for the input field when it's focused
-			m.input, cmd = m.input.Update(msg)
 			cmds = append(cmds, cmd)
 		}
 
