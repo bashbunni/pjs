@@ -10,8 +10,6 @@ type errMsg struct {error}
 
 // project
 
-type createProjectListMsg struct {
-	project models.Project
-}
+type updateProjectListMsg struct {}
 
 type renameProjectMsg struct {}

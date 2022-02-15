@@ -85,7 +85,6 @@ func (g *GormProjectRepository) CreateProject(name string) (Project, error) {
 	return proj, nil
 }
 
-// TODO: check for cascade delete functionality for GORM
 func (g *GormProjectRepository) DeleteProject(projectID uint) error {
 	if err := g.DB.Delete(&Project{}, projectID).Error; err != nil {
 		return utils.ErrCannotDeleteProject
@@ -93,7 +92,6 @@ func (g *GormProjectRepository) DeleteProject(projectID uint) error {
 	return nil
 }
 
-// TODO: make pe's Project a *Project instead to simplify?
 func (g *GormProjectRepository) RenameProject(id uint, name string) {
 	var newProject Project
 	if err := g.DB.Where("id = ?", id).First(&newProject).Error; err != nil {

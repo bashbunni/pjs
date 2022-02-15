@@ -61,7 +61,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				title: fmt.Sprintf("%d", e.ID),
 			})
 		}
-	case createProjectListMsg:
+	case updateProjectListMsg:
 		projects, err := m.pr.GetAllProjects()
 		if err != nil {
 			log.Fatal(err)
@@ -101,9 +101,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			// only log keypresses for the input field when it's focused
 			m.input, cmd = m.input.Update(msg)
 			cmds = append(cmds, cmd)
-		}
-
-		if !m.input.Focused() { 
+		} else { 
 			switch {
 				case key.Matches(msg, m.keymap.create):
 					m.mode = "create"

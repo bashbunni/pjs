@@ -22,11 +22,11 @@ func updateEntryListCmd(activeProject int, er *models.GormEntryRepository) tea.C
 
 func createProjectCmd(name string, pr *models.GormProjectRepository) tea.Cmd {
 	return func() tea.Msg {
-		project, err := pr.CreateProject(name)
+		_, err := pr.CreateProject(name)
 		if err != nil {
 			return errMsg{err}
 		}
-		return createProjectListMsg{project}
+		return updateProjectListMsg{}
 	}
 }
 
@@ -34,6 +34,13 @@ func renameProjectCmd(id uint, pr *models.GormProjectRepository, name string) te
 	return func() tea.Msg {
 		pr.RenameProject(id, name)
 		return renameProjectMsg{}
+	}
+}
+
+func deleteProjectCmd(id uint, pr *models.GormProjectRepository) tea.Cmd {
+	return func() tea.Msg {
+		pr.DeleteProject(id)
+		return updateProjectListMsg{}
 	}
 }
 
