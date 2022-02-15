@@ -55,7 +55,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case updateEntryListMsg:
-		// TODO: make this work?
 		entries := make([]list.Item, 0, len(msg.entries))
 		for _, e := range msg.entries {
 			entries = append(entries, item{
@@ -174,8 +173,8 @@ func ChooseProject(pr models.GormProjectRepository, er models.GormEntryRepositor
 			key.WithHelp("d", "delete"),
 		),
 		back: key.NewBinding(
-			key.WithKeys("left"),
-			key.WithHelp("left", "back"),
+			key.WithKeys("esc"),
+			key.WithHelp("esc", "back"),
 		),
 	},
 	}
