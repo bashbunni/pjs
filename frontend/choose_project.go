@@ -133,7 +133,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() string {
-	return docStyle.Render(m.list.View() + "\n" + m.input.View())
+	if m.input.Focused() {
+		return docStyle.Render(m.list.View() + "\n" + m.input.View())
+	}
+	return docStyle.Render(m.list.View() + "\n") 
 }
 
 // functions
