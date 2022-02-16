@@ -156,7 +156,20 @@ func ChooseProject(pr models.GormProjectRepository, er models.GormEntryRepositor
 		log.Fatal(err)
 	}
 	items := projectsToItems(projects)
-	m := model{list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), input: input, pr: &pr, er: &er, keymap: 
+	m := initModel(items, input, &pr, &er)
+	
+	tea.LogToFile("debug.log", "debug")
+	p := tea.NewProgram(m)
+	p.EnterAltScreen()
+
+	if err := p.Start(); err != nil {
+		fmt.Println("Error running program:", err)
+		os.Exit(1)
+	}
+}
+
+func initModel(items []list.Item, input textinput.Model, pr *models.GormProjectRepository, er *models.GormEntryRepository) tea.Model {
+	m := model{list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), input: input, pr: pr, er: er, keymap: 
 	keymap{
 		create: key.NewBinding(
 			key.WithKeys("c"),
@@ -189,16 +202,10 @@ func ChooseProject(pr models.GormProjectRepository, er models.GormEntryRepositor
 			m.keymap.back,
 		}
 	}
-	tea.LogToFile("debug.log", "debug")
-	p := tea.NewProgram(m)
-	p.EnterAltScreen()
-
-	if err := p.Start(); err != nil {
-		fmt.Println("Error running program:", err)
-		os.Exit(1)
-	}
+	return m 
 }
 
+// TODO: use generics
 // convert []model.Project to []list.Item
 func projectsToItems(projects []models.Project) []list.Item {
 	items := make([]list.Item, len(projects))
