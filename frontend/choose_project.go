@@ -57,6 +57,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
+	switch m.state {
+	case "viewProjectList":
+		return m.handleProjectList(msg, cmds, cmd)
+	}
+	return m, tea.Batch(cmds...)
+}
+
+func (m model) View() string {
+	if m.input.Focused() {
+		return docStyle.Render(m.list.View() + "\n" + m.input.View())
+	}
+	return docStyle.Render(m.list.View() + "\n") 
+}
+
+// functions
+
+func (m model) handleProjectList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case updateProjectListMsg:
 		projects, err := m.pr.GetAllProjects()
@@ -74,7 +91,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		items := projectsToItems(projects)
 		m.list.SetItems(items)
 		m.mode = ""
-
 	case tea.KeyMsg:
 		if m.input.Focused() {
 			if key.Matches(msg, m.keymap.enter) {
@@ -121,23 +137,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.list, cmd = m.list.Update(msg)
 			cmds = append(cmds, cmd)
 		}
-
 	case tea.WindowSizeMsg:
 		top, right, bottom, left := docStyle.GetMargin()
 		m.list.SetSize(msg.Width-left-right, msg.Height-top-bottom-1)
 	}
-
 	return m, tea.Batch(cmds...)
 }
-
-func (m model) View() string {
-	if m.input.Focused() {
-		return docStyle.Render(m.list.View() + "\n" + m.input.View())
-	}
-	return docStyle.Render(m.list.View() + "\n") 
-}
-
-// functions
 
 // Initial model (AKA first View)
 func ChooseProject(pr models.GormProjectRepository, er models.GormEntryRepository) {
@@ -166,7 +171,7 @@ func ChooseProject(pr models.GormProjectRepository, er models.GormEntryRepositor
 }
 
 func initModel(items []list.Item, input textinput.Model, pr *models.GormProjectRepository, er *models.GormEntryRepository) tea.Model {
-	m := model{list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), input: input, pr: pr, er: er, keymap: 
+	m := model{state: "viewProjectList", list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), input: input, pr: pr, er: er, keymap: 
 	keymap{
 		create: key.NewBinding(
 			key.WithKeys("c"),
