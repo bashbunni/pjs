@@ -28,6 +28,7 @@ func (i item) FilterValue() string { return i.title }
 
 // implements tea.Model (Init, Update, View)
 type model struct {
+	state string
 	list list.Model 
 	input textinput.Model
 	pr *models.GormProjectRepository
@@ -49,18 +50,14 @@ func (m model) Init() tea.Cmd {
 	return nil
 }
 
+// organize Update, View by state
+// are we checking the messages for the state?
+// I'm looking to do different things with each message depending on the state
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case updateEntryListMsg:
-		entries := make([]list.Item, 0, len(msg.entries))
-		for _, e := range msg.entries {
-			entries = append(entries, item{
-				title: fmt.Sprintf("%d", e.ID),
-			})
-		}
 	case updateProjectListMsg:
 		projects, err := m.pr.GetAllProjects()
 		if err != nil {
