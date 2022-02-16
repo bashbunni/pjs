@@ -1,4 +1,6 @@
 
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=bashbunni-pjm&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=bashbunni-pjm)
+
 ## Purpose
 *A tool for per-project timestamped work logging.*
 The point is so that when your boss asks you seven months later why you made a very specific design decision, you can send them the whole list of progress updates on the project throughout its lifecycle. 
