@@ -14,7 +14,7 @@ import (
 const divider = "_______________________________________"
 
 // helpers
-func formattedOutputFromEntries(Entries []models.Entry) []byte {
+func FormattedOutputFromEntries(Entries []models.Entry) []byte {
 	var output string
 	for _, entry := range Entries {
 		output += fmt.Sprintf("ID: %d\nCreated: %s\nMessage:\n %s\n %s\n", entry.ID, entry.CreatedAt.Format("2006-01-02"), entry.Message, divider)
@@ -29,7 +29,7 @@ func OutputEntriesToMarkdown(entries []models.Entry) error {
 		return utils.ErrCannotCreateFile
 	}
 	defer file.Close() // want defer as close to acquisition of resources as possible
-	output := formattedOutputFromEntries(entries)
+	output := FormattedOutputFromEntries(entries)
 	_, err = file.Write(output)
 	if err != nil {
 		return utils.ErrCannotSaveFile
@@ -38,7 +38,7 @@ func OutputEntriesToMarkdown(entries []models.Entry) error {
 }
 
 func OutputEntriesToPDF(entries []models.Entry) error {
-	output := formattedOutputFromEntries(entries)              // []byte
+	output := FormattedOutputFromEntries(entries)              // []byte
 	pandoc := exec.Command("pandoc", "-s", "-o", "output.pdf") // c is going to run pandoc, so I'm assigning the pipe to c
 	wc, wcerr := pandoc.StdinPipe()                            // io.WriteCloser, err
 	if wcerr != nil {
