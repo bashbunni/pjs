@@ -18,52 +18,52 @@ func controlSubcommands(db *gorm.DB) {
 		name := models.NewProjectPrompt()
 		pr.CreateProject(name)
 	} else {
-		frontend.ChooseProject(pr, models.GormEntryRepository{DB: db})
+		frontend.StartTea(pr, models.GormEntryRepository{DB: db})
 	}
 }
 
- //func hasSubcommands() bool {
- //	if len(os.Args) < 2 {
- //		fmt.Println("expected entry, output, or project subcommands after project ID")
- //		return false
- //	}
- //	return true
- //}
- //
- //func controlEntryCommand(pe *models.ProjectWithEntries, er models.EntryRepository) {
- //	if *createEntry {
- //		message := utils.CaptureInputFromFile()
- //		er.CreateEntry(message, pe)
- //	}
- //	if *deleteEntry != 0 {
- //		er.DeleteEntryByID(*deleteEntry, pe)
- //	}
- //}
- //
- //func controlOutputCommand(entries []models.Entry) {
- //	if *markdown {
- //		err := outputs.OutputEntriesToMarkdown(entries)
- //		if err != nil {
- //			log.Fatal(err)
- //		}
- //	}
- //	if *pdf {
- //		err := outputs.OutputEntriesToPDF(entries)
- //		if err != nil {
- //			log.Fatal(err)
- //		}
- //	}
- //}
- //
- //func controlProjectCommand(pe *models.ProjectWithEntries, pr models.ProjectRepository, er models.EntryRepository) {
- //	if *listAllProjects {
- //		pr.PrintProjects()
- //	}
- //	if *deleteProject {
- //		pr.DeleteProject(pe, er)
- //		os.Exit(0)
- //	}
- //	if *editProject {
- //		pr.RenameProject(pe)
- //	}
- //}
+//func hasSubcommands() bool {
+//	if len(os.Args) < 2 {
+//		fmt.Println("expected entry, output, or project subcommands after project ID")
+//		return false
+//	}
+//	return true
+//}
+//
+//func controlEntryCommand(pe *models.ProjectWithEntries, er models.EntryRepository) {
+//	if *createEntry {
+//		message := utils.CaptureInputFromFile()
+//		er.CreateEntry(message, pe)
+//	}
+//	if *deleteEntry != 0 {
+//		er.DeleteEntryByID(*deleteEntry, pe)
+//	}
+//}
+//
+//func controlOutputCommand(entries []models.Entry) {
+//	if *markdown {
+//		err := outputs.OutputEntriesToMarkdown(entries)
+//		if err != nil {
+//			log.Fatal(err)
+//		}
+//	}
+//	if *pdf {
+//		err := outputs.OutputEntriesToPDF(entries)
+//		if err != nil {
+//			log.Fatal(err)
+//		}
+//	}
+//}
+//
+//func controlProjectCommand(pe *models.ProjectWithEntries, pr models.ProjectRepository, er models.EntryRepository) {
+//	if *listAllProjects {
+//		pr.PrintProjects()
+//	}
+//	if *deleteProject {
+//		pr.DeleteProject(pe, er)
+//		os.Exit(0)
+//	}
+//	if *editProject {
+//		pr.RenameProject(pe)
+//	}
+//}
