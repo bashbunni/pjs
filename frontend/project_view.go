@@ -113,6 +113,11 @@ func initProjectView(items []list.Item, input textinput.Model, pr *models.GormPr
 			m.keymap.back,
 		}
 	}
+	vp, err := initEntries(m)
+	if err != nil {
+		log.Fatal(err)
+	}
+	m.viewport = vp
 	return m
 }
 
