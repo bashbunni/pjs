@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/bashbunni/project-management/models"
+	"github.com/bashbunni/project-management/outputs"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -15,37 +16,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// TODO: render list of entries -> need to update m.list with entries instead of projects and change title to proj name
-// TODO: stop cursor from moving in edit mode -> override list.Model
-
-const content = `
-Today’s Menu
-| Name        | Price | Notes                           |
-| ---         | ---   | ---                             |
-| Tsukemono   | $2    | Just an appetizer               |
-| Tomato Soup | $4    | Made with San Marzano tomatoes  |
-| Okonomiyaki | $4    | Takes a few minutes to make     |
-| Curry       | $3    | We can add squash if you’d like |
-Seasonal Dishes
-| Name                 | Price | Notes              |
-| ---                  | ---   | ---                |
-| Steamed bitter melon | $2    | Not so bitter      |
-| Takoyaki             | $3    | Fun to eat         |
-| Winter squash        | $3    | Today it's pumpkin |
-Desserts
-| Name         | Price | Notes                 |
-| ---          | ---   | ---                   |
-| Dorayaki     | $4    | Looks good on rabbits |
-| Banana Split | $5    | A classic             |
-| Cream Puff   | $3    | Pretty creamy!        |
-All our dishes are made in-house by Karen, our chef. Most of our ingredients
-are from our garden or the fish market down the street.
-Some famous people that have eaten here lately:
-* [x] René Redzepi
-* [x] David Chang
-* [ ] Jiro Ono (maybe some day)
-Bon appétit!
-`
+/* tasks
+TODO: add CRUD for entries from entry view
+*/
 
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
 
@@ -78,6 +51,27 @@ type keymap struct {
 	back   key.Binding
 }
 
+func StartTea(pr models.GormProjectRepository, er models.GormEntryRepository) {
+	input := textinput.New()
+	input.Prompt = "$ "
+	input.Placeholder = "Project name..."
+	input.CharLimit = 250
+	input.Width = 50
+	projects, err := pr.GetAllProjects()
+	if err != nil {
+		log.Fatal(err)
+	}
+	items := projectsToItems(projects)
+	m := initProjectView(items, input, &pr, &er)
+	tea.LogToFile("debug.log", "debug")
+	p := tea.NewProgram(m)
+	p.EnterAltScreen()
+	if err := p.Start(); err != nil {
+		fmt.Println("Error running program:", err)
+		os.Exit(1)
+	}
+}
+
 func (m model) Init() tea.Cmd {
 	return nil
 }
@@ -85,7 +79,6 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
-
 	switch m.state {
 	case "viewProjectList":
 		return m.handleProjectList(msg, cmds, cmd)
@@ -106,12 +99,12 @@ func (m model) View() string {
 		return docStyle.Render(m.list.View() + "\n")
 	}
 }
+
+// entries
 func (m model) handleEntriesList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.viewport.Width = msg.Width
-		// check for my cmds being done running
-		// check for keypresses?
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q", "ctrl+c":
@@ -124,7 +117,15 @@ func (m model) handleEntriesList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (mode
 	return m, tea.Batch(cmds...)
 }
 
-func initEntries(m tea.Model) (viewport.Model, error) {
+func getEntryMessagesByProjectIDAsSingleString(id uint, er *models.GormEntryRepository) (string, error) {
+	entries, err := er.GetEntriesByProjectID(id)
+	if err != nil {
+		return "", err
+	}
+	return string(outputs.FormattedOutputFromEntries(entries)), nil
+}
+
+func initEntries(m model) (viewport.Model, error) {
 	vp := viewport.New(78, 20)
 	vp.Style = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
@@ -134,32 +135,12 @@ func initEntries(m tea.Model) (viewport.Model, error) {
 	if err != nil {
 		return vp, err
 	}
+	// TODO: pass project ID of chosen project to this function
+	content, err := getEntryMessagesByProjectIDAsSingleString(1, m.er)
 	str, err := renderer.Render(content)
 	if err != nil {
 		return vp, err
 	}
 	vp.SetContent(str)
 	return vp, nil
-}
-
-func StartTea(pr models.GormProjectRepository, er models.GormEntryRepository) {
-	input := textinput.New()
-	input.Prompt = "$ "
-	input.Placeholder = "Project name..."
-	input.CharLimit = 250
-	input.Width = 50
-
-	projects, err := pr.GetAllProjects()
-	if err != nil {
-		log.Fatal(err)
-	}
-	items := projectsToItems(projects)
-	m := initProjectView(items, input, &pr, &er)
-	tea.LogToFile("debug.log", "debug")
-	p := tea.NewProgram(m)
-	p.EnterAltScreen()
-	if err := p.Start(); err != nil {
-		fmt.Println("Error running program:", err)
-		os.Exit(1)
-	}
 }
