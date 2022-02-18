@@ -35,9 +35,7 @@ func (m model) handleProjectList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (mode
 					cmds = append(cmds, createProjectCmd(m.input.Value(), m.pr))
 				}
 				if m.mode == "edit" {
-					items := m.list.Items()
-					activeItem := items[m.list.Index()]
-					cmds = append(cmds, renameProjectCmd(activeItem.(models.Project).ID, m.pr, m.input.Value()))
+					cmds = append(cmds, renameProjectCmd(getActiveProjectID(m), m.pr, m.input.Value()))
 				}
 				m.input.SetValue("")
 				m.mode = ""
@@ -129,4 +127,10 @@ func projectsToItems(projects []models.Project) []list.Item {
 		items[i] = list.Item(proj)
 	}
 	return items
+}
+
+func getActiveProjectID(m model) uint {
+	items := m.list.Items()
+	activeItem := items[m.list.Index()]
+	return activeItem.(models.Project).ID
 }
