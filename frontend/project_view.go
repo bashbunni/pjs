@@ -10,6 +10,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// TODO: fix entries output (currently only showing latest)
+// TODO: add multi-page navigation
+
 func (m model) handleProjectList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case updateProjectListMsg:

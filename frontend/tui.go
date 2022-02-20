@@ -97,7 +97,6 @@ func (m model) View() string {
 	}
 }
 
-// entries
 func (m model) handleEntriesList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case updateEntryListMsg:
