@@ -16,11 +16,8 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-/* tasks
-TODO: add CRUD for entries from entry view
-*/
-
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
+var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
 type item struct {
 	title, desc string
@@ -32,15 +29,15 @@ func (i item) FilterValue() string { return i.title }
 
 // implements tea.Model (Init, Update, View)
 type model struct {
-	state    string
-	viewport viewport.Model
-	list     list.Model
-	input    textinput.Model
-	pr       *models.GormProjectRepository
-	er       *models.GormEntryRepository
-	keymap   keymap
-	mode     string
-	err      error // TODO: does this get used
+	state           string
+	viewport        viewport.Model
+	list            list.Model
+	input           textinput.Model
+	pr              *models.GormProjectRepository
+	er              *models.GormEntryRepository
+	keymap          keymap
+	mode            string
+	activeProjectID uint
 }
 
 type keymap struct {
@@ -91,7 +88,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	switch m.state {
 	case "viewEntries":
-		return docStyle.Render(m.viewport.View())
+		return docStyle.Render(m.viewport.View() + m.helpView())
 	default:
 		if m.input.Focused() {
 			return docStyle.Render(m.list.View() + "\n" + m.input.View())
@@ -103,9 +100,15 @@ func (m model) View() string {
 // entries
 func (m model) handleEntriesList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case updateEntryListMsg:
+		cmds = append(cmds, updateEntryListCmd(m.activeProjectID, m.er))
+
 	case tea.WindowSizeMsg:
 		m.viewport.Width = msg.Width
 	case tea.KeyMsg:
+		if key.Matches(msg, m.keymap.create) {
+			cmds = append(cmds, createEntryCmd(m.activeProjectID, m.er))
+		}
 		switch msg.String() {
 		case "q", "ctrl+c":
 			return m, tea.Quit
@@ -131,16 +134,22 @@ func initEntries(m model) (viewport.Model, error) {
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62")).
 		PaddingRight(2)
-	renderer, err := glamour.NewTermRenderer(glamour.WithStylePath("notty"))
+	renderer, err := glamour.NewTermRenderer(
+		glamour.WithStylePath("dracula"),
+		glamour.WithAutoStyle(),
+	)
 	if err != nil {
 		return vp, err
 	}
-	// TODO: pass project ID of chosen project to this function
-	content, err := getEntryMessagesByProjectIDAsSingleString(1, m.er)
+	content, err := getEntryMessagesByProjectIDAsSingleString(m.getActiveProjectID(), m.er)
 	str, err := renderer.Render(content)
 	if err != nil {
 		return vp, err
 	}
 	vp.SetContent(str)
 	return vp, nil
+}
+
+func (m model) helpView() string {
+	return helpStyle("\n ↑/↓: navigate  • esc: back • c: create entry • d: delete entry • q: quit\n")
 }
