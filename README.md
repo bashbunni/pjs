@@ -3,6 +3,8 @@
 *A tool for per-project timestamped work logging.*
 The point is so that when your boss asks you seven months later why you made a very specific design decision, you can send them the whole list of progress updates on the project throughout its lifecycle. 
 
+## Status
+- [] create entry -> functionality is blocked by [this issue](https://github.com/charmbracelet/bubbletea/issues/171)
 
 ## Build Instructions
 
