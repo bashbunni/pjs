@@ -19,14 +19,6 @@ import (
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
-type item struct {
-	title, desc string
-}
-
-func (i item) Title() string       { return i.title }
-func (i item) Description() string { return i.desc }
-func (i item) FilterValue() string { return i.title }
-
 // implements tea.Model (Init, Update, View)
 type model struct {
 	state           string
@@ -48,6 +40,7 @@ type keymap struct {
 	back   key.Binding
 }
 
+// The entry point for the UI. Initializes the model.
 func StartTea(pr models.GormProjectRepository, er models.GormEntryRepository) {
 	input := textinput.New()
 	input.Prompt = "$ "
@@ -149,6 +142,9 @@ func initEntries(m model) (viewport.Model, error) {
 		return vp, err
 	}
 	content, err := getEntryMessagesByProjectIDAsSingleString(m.getActiveProjectID(), m.er)
+	if err != nil {
+		return vp, err
+	}
 	str, err := renderer.Render(content)
 	if err != nil {
 		return vp, err
