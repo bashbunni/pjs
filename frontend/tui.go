@@ -106,11 +106,14 @@ func (m model) handleEntriesList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (mode
 	case tea.WindowSizeMsg:
 		m.viewport.Width = msg.Width
 	case tea.KeyMsg:
-		if key.Matches(msg, m.keymap.create) {
+		switch {
+		case key.Matches(msg, m.keymap.create):
 			cmds = append(cmds, createEntryCmd(m.activeProjectID, m.er))
-		}
-		switch msg.String() {
-		case "q", "ctrl+c":
+		case key.Matches(msg, m.keymap.back):
+			m.state = "viewProjectList"
+		case msg.String() == "ctrl+c":
+			return m, tea.Quit
+		case msg.String() == "q":
 			return m, tea.Quit
 		default:
 			m.viewport, cmd = m.viewport.Update(msg)
