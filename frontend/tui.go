@@ -60,7 +60,14 @@ func StartTea(pr models.GormProjectRepository, er models.GormEntryRepository) {
 	}
 	items := projectsToItems(projects)
 	m := initProjectView(items, input, &pr, &er)
-	tea.LogToFile("debug.log", "debug")
+	if os.Getenv("HELP_DEBUG") != "" {
+		if f, err := tea.LogToFile("debug.log", "help"); err != nil {
+			fmt.Println("Couldn't open a file for logging:", err)
+			os.Exit(1)
+		} else {
+			defer f.Close()
+		}
+	}
 	p := tea.NewProgram(m)
 	p.EnterAltScreen()
 	if err := p.Start(); err != nil {

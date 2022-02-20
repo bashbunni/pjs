@@ -29,7 +29,10 @@ func renameProjectCmd(id uint, pr *models.GormProjectRepository, name string) te
 
 func deleteProjectCmd(id uint, pr *models.GormProjectRepository) tea.Cmd {
 	return func() tea.Msg {
-		pr.DeleteProject(id)
+		err := pr.DeleteProject(id)
+		if err != nil {
+			return errMsg{err}
+		}
 		return updateProjectListMsg{}
 	}
 }
