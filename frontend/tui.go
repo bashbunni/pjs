@@ -101,8 +101,7 @@ func (m model) View() string {
 func (m model) handleEntriesList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case updateEntryListMsg:
-		cmds = append(cmds, updateEntryListCmd(m.activeProjectID, m.er))
-
+		// update vp.SetContent
 	case tea.WindowSizeMsg:
 		m.viewport.Width = msg.Width
 	case tea.KeyMsg:
