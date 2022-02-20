@@ -4,19 +4,9 @@ import (
 	"log"
 
 	"github.com/bashbunni/project-management/models"
+	"github.com/bashbunni/project-management/utils"
 	tea "github.com/charmbracelet/bubbletea"
 )
-
-func updateEntryListCmd(activeProject int, er *models.GormEntryRepository) tea.Cmd {
-	return func() tea.Msg {
-		entries, err := er.GetEntriesByProjectID(uint(activeProject+1))
-		log.Println(len(entries))
-		if err != nil {
-			return errMsg{err}
-		}
-		return updateEntryListMsg{entries}
-	}
-}
 
 // projects
 
@@ -47,13 +37,23 @@ func deleteProjectCmd(id uint, pr *models.GormProjectRepository) tea.Cmd {
 // entries
 
 // TODO: implement
-func createEntryCmd(activeProject int, er *models.GormEntryRepository) tea.Cmd {
+func createEntryCmd(activeProject uint, er *models.GormEntryRepository) tea.Cmd {
 	return func() tea.Msg {
-		err := er.CreateEntry([]byte("hello"), uint(activeProject+1))
+		err := er.CreateEntry(utils.CaptureInputFromFile(), uint(activeProject+1))
 		if err != nil {
 			return errMsg{err}
 		}
-		return updateEntryListCmd(activeProject, er)
+		return nil
 	}
 }
 
+func updateEntryListCmd(activeProject uint, er *models.GormEntryRepository) tea.Cmd {
+	return func() tea.Msg {
+		entries, err := er.GetEntriesByProjectID(uint(activeProject + 1))
+		log.Println(len(entries))
+		if err != nil {
+			return errMsg{err}
+		}
+		return updateEntryListMsg{entries}
+	}
+}
