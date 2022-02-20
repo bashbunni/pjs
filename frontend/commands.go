@@ -42,7 +42,8 @@ func deleteProjectCmd(id uint, pr *models.GormProjectRepository) tea.Cmd {
 // TODO: implement
 func createEntryCmd(activeProject uint, er *models.GormEntryRepository) tea.Cmd {
 	return func() tea.Msg {
-		err := er.CreateEntry(utils.CaptureInputFromFile(), uint(activeProject+1))
+		// TODO: doesn't work
+		err := er.CreateEntry(utils.CaptureInputFromFile(), activeProject)
 		if err != nil {
 			return errMsg{err}
 		}
@@ -52,7 +53,7 @@ func createEntryCmd(activeProject uint, er *models.GormEntryRepository) tea.Cmd 
 
 func updateEntryListCmd(activeProject uint, er *models.GormEntryRepository) tea.Cmd {
 	return func() tea.Msg {
-		entries, err := er.GetEntriesByProjectID(uint(activeProject + 1))
+		entries, err := er.GetEntriesByProjectID(activeProject)
 		log.Println(len(entries))
 		if err != nil {
 			return errMsg{err}
