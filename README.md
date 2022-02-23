@@ -5,6 +5,7 @@ The point is so that when your boss asks you seven months later why you made a v
 
 ## Status
 - [] create entry -> functionality is blocked by [this issue](https://github.com/charmbracelet/bubbletea/issues/171)
+- [] add scrolling to pagination provided by slides
 
 ## Build Instructions
 
