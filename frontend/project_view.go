@@ -7,10 +7,10 @@ import (
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// TODO: fix entries output (currently only showing latest)
 // TODO: add multi-page navigation
 
 func (m model) handleProjectList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (model, tea.Cmd) {
@@ -114,11 +114,11 @@ func initProjectView(items []list.Item, input textinput.Model, pr *models.GormPr
 			m.keymap.back,
 		}
 	}
-	vp, err := initEntries(m)
+	m.viewport = viewport.New(78, 40)
+	err := m.initEntries()
 	if err != nil {
 		log.Fatal(err)
 	}
-	m.viewport = vp
 	return m
 }
 
