@@ -30,6 +30,7 @@ type model struct {
 	keymap          keymap
 	mode            string
 	activeProjectID uint
+	ready           bool
 }
 
 type keymap struct {
@@ -102,7 +103,15 @@ func (m model) handleEntriesList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (mode
 	case updateEntryListMsg:
 		// update vp.SetContent
 	case tea.WindowSizeMsg:
+		// TODO: why isn't this working?
+		if !m.ready {
+			m.viewport = viewport.New(msg.Width, msg.Height-2)
+			m.initEntries()
+			m.viewport.YPosition = 1
+			m.ready = true
+		}
 		m.viewport.Width = msg.Width
+		m.viewport.Height = msg.Height
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keymap.create):
@@ -129,9 +138,9 @@ func getEntryMessagesByProjectIDAsSingleString(id uint, er *models.GormEntryRepo
 	return string(outputs.FormattedOutputFromEntries(entries)), nil
 }
 
-func initEntries(m model) (viewport.Model, error) {
-	vp := viewport.New(78, 20)
-	vp.Style = lipgloss.NewStyle().
+func (m *model) initEntries() error {
+	//	vp := viewport.New(78, 20)
+	m.viewport.Style = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62")).
 		PaddingRight(2)
@@ -140,18 +149,18 @@ func initEntries(m model) (viewport.Model, error) {
 		glamour.WithAutoStyle(),
 	)
 	if err != nil {
-		return vp, err
+		return err
 	}
 	content, err := getEntryMessagesByProjectIDAsSingleString(m.getActiveProjectID(), m.er)
 	if err != nil {
-		return vp, err
+		return err
 	}
 	str, err := renderer.Render(content)
 	if err != nil {
-		return vp, err
+		return err
 	}
-	vp.SetContent(str)
-	return vp, nil
+	m.viewport.SetContent(str)
+	return nil
 }
 
 func (m model) helpView() string {
