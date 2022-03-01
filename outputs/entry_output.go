@@ -15,7 +15,7 @@ const divider = "---"
 // helpers
 func FormattedOutputFromEntries(Entries []models.Entry) []byte {
 	var output string
-	for i := len(Entries) - 1; i > 0; i-- {
+	for i := len(Entries) - 1; i >= 0; i-- {
 		output += fmt.Sprintf("ID: %d\nCreated: %s\nMessage:\n %s\n %s\n", Entries[i].ID, Entries[i].CreatedAt.Format("2006-01-02"), Entries[i].Message, divider)
 	}
 	return []byte(output)
