@@ -5,7 +5,7 @@ The point is so that when your boss asks you seven months later why you made a v
 
 ## Status
 - [] create entry -> functionality is blocked by [this issue](https://github.com/charmbracelet/bubbletea/issues/171)
-- [] add scrolling to pagination provided by slides
+    - in the meantime, you can create entries by running the project with a subcommand (any subcommand works e.g. `./project-management e`) and it will start the entrypoint to create an entry
 
 ## Build Instructions
 
