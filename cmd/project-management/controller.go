@@ -2,9 +2,11 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/bashbunni/project-management/frontend"
 	"github.com/bashbunni/project-management/models"
+	"github.com/bashbunni/project-management/utils"
 	"gorm.io/gorm"
 )
 
@@ -18,18 +20,22 @@ func controlSubcommands(db *gorm.DB) {
 		name := models.NewProjectPrompt()
 		pr.CreateProject(name)
 	} else {
-		frontend.StartTea(pr, models.GormEntryRepository{DB: db})
+		if hasSubcommands() {
+			er := models.GormEntryRepository{DB: db}
+			er.CreateEntry(utils.CaptureInputFromFile(), 1)
+		} else {
+			frontend.StartTea(pr, models.GormEntryRepository{DB: db})
+		}
 	}
 }
 
-//func hasSubcommands() bool {
-//	if len(os.Args) < 2 {
-//		fmt.Println("expected entry, output, or project subcommands after project ID")
-//		return false
-//	}
-//	return true
-//}
-//
+func hasSubcommands() bool {
+	if len(os.Args) < 2 {
+		return false
+	}
+	return true
+}
+
 //func controlEntryCommand(pe *models.ProjectWithEntries, er models.EntryRepository) {
 //	if *createEntry {
 //		message := utils.CaptureInputFromFile()
