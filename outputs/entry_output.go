@@ -10,14 +10,13 @@ import (
 	"github.com/pkg/errors"
 )
 
-// TODO: make this not trash
-const divider = "_______________________________________"
+const divider = "---"
 
 // helpers
 func FormattedOutputFromEntries(Entries []models.Entry) []byte {
 	var output string
-	for _, entry := range Entries {
-		output += fmt.Sprintf("ID: %d\nCreated: %s\nMessage:\n %s\n %s\n", entry.ID, entry.CreatedAt.Format("2006-01-02"), entry.Message, divider)
+	for i := len(Entries) - 1; i > 0; i-- {
+		output += fmt.Sprintf("ID: %d\nCreated: %s\nMessage:\n %s\n %s\n", Entries[i].ID, Entries[i].CreatedAt.Format("2006-01-02"), Entries[i].Message, divider)
 	}
 	return []byte(output)
 }
