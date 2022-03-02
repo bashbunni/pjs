@@ -74,9 +74,6 @@ func (m model) handleProjectList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (mode
 			m.list, cmd = m.list.Update(msg)
 			cmds = append(cmds, cmd)
 		}
-	case tea.WindowSizeMsg:
-		top, right, bottom, left := docStyle.GetMargin()
-		m.list.SetSize(msg.Width-left-right, msg.Height-top-bottom-1)
 	}
 	return m, tea.Batch(cmds...)
 }
@@ -114,7 +111,8 @@ func initProjectView(items []list.Item, input textinput.Model, pr *models.GormPr
 			m.keymap.back,
 		}
 	}
-	m.viewport = viewport.New(28, 40)
+
+	m.viewport = viewport.New(8, 8)
 	err := m.initEntries()
 	if err != nil {
 		log.Fatal(err)

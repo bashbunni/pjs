@@ -25,7 +25,7 @@ func projectPrompt(pr models.ProjectRepository) models.Project {
 }
 
 func OpenSqlite() *gorm.DB {
-	db, err :=  gorm.Open(sqlite.Open("new.db"), &gorm.Config{})
+	db, err := gorm.Open(sqlite.Open("new.db"), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("unable to open database: %v", err)
 	}

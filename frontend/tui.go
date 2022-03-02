@@ -12,26 +12,28 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 )
 
 var docStyle = lipgloss.NewStyle().Margin(1, 2)
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
-var p *tea.Program
+var (
+	p        *tea.Program
+	renderer *glamour.TermRenderer
+)
 
 // implements tea.Model (Init, Update, View)
 type model struct {
-	state           string
-	viewport        viewport.Model
-	list            list.Model
-	input           textinput.Model
-	pr              *models.GormProjectRepository
-	er              *models.GormEntryRepository
-	keymap          keymap
-	mode            string
-	activeProjectID uint
-	ready           bool
+	state    string
+	viewport viewport.Model
+	list     list.Model
+	input    textinput.Model
+	pr       *models.GormProjectRepository
+	er       *models.GormEntryRepository
+	keymap   keymap
+	mode     string
 }
 
 type keymap struct {
@@ -44,17 +46,6 @@ type keymap struct {
 
 // The entry point for the UI. Initializes the model.
 func StartTea(pr models.GormProjectRepository, er models.GormEntryRepository) {
-	input := textinput.New()
-	input.Prompt = "$ "
-	input.Placeholder = "Project name..."
-	input.CharLimit = 250
-	input.Width = 50
-	projects, err := pr.GetAllProjects()
-	if err != nil {
-		log.Fatal(err)
-	}
-	items := projectsToItems(projects)
-	m := initProjectView(items, input, &pr, &er)
 	if os.Getenv("HELP_DEBUG") != "" {
 		if f, err := tea.LogToFile("debug.log", "help"); err != nil {
 			fmt.Println("Couldn't open a file for logging:", err)
@@ -63,6 +54,27 @@ func StartTea(pr models.GormProjectRepository, er models.GormEntryRepository) {
 			defer f.Close()
 		}
 	}
+
+	input := textinput.New()
+	input.Prompt = "$ "
+	input.Placeholder = "Project name..."
+	input.CharLimit = 250
+	input.Width = 50
+
+	var err error
+	renderer, err = glamour.NewTermRenderer(
+		glamour.WithStylePath("dracula"),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	projects, err := pr.GetAllProjects()
+	if err != nil {
+		log.Fatal(err)
+	}
+	items := projectsToItems(projects)
+	m := initProjectView(items, input, &pr, &er)
 	p = tea.NewProgram(m)
 	p.EnterAltScreen()
 	if err := p.Start(); err != nil {
@@ -78,6 +90,18 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	var cmd tea.Cmd
+
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		// update entry view size
+		m.viewport.Width = msg.Width
+		m.viewport.Height = msg.Height - 8
+
+		// update list size
+		top, right, bottom, left := docStyle.GetMargin()
+		m.list.SetSize(msg.Width-left-right, msg.Height-top-bottom-1)
+	}
+
 	switch m.state {
 	case "viewProjectList":
 		return m.handleProjectList(msg, cmds, cmd)

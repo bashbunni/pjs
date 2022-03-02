@@ -6,7 +6,7 @@ replace github.com/bashbunni/project-management/models => ./models
 
 require (
 	github.com/charmbracelet/bubbles v0.10.2
-	github.com/charmbracelet/bubbletea v0.19.3
+	github.com/charmbracelet/bubbletea v0.20.1-0.20220301222809-b96d11cbbb86
 	github.com/charmbracelet/glamour v0.5.0
 	github.com/charmbracelet/lipgloss v0.4.0
 	github.com/pkg/errors v0.9.1
@@ -40,5 +40,3 @@ require (
 	golang.org/x/sys v0.0.0-20220209214540-3681064d5158 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 )
-
-replace github.com/charmbracelet/bubbletea => /Users/bashbunni/bubbletea
