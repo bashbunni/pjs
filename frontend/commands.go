@@ -33,13 +33,14 @@ func deleteProjectCmd(id uint, pr *models.GormProjectRepository) tea.Cmd {
 	}
 }
 
-// TODO: implement
-func createEntryCmd(activeProject uint, er *models.GormEntryRepository) tea.Cmd {
+func (m model) createEntryCmd(activeProject uint, er *models.GormEntryRepository) tea.Cmd {
 	return func() tea.Msg {
+		p.ReleaseTerminal()
 		err := er.CreateEntry(utils.CaptureInputFromFile(), activeProject)
 		if err != nil {
 			return errMsg{err}
 		}
+		p.RestoreTerminal()
 		return updateEntryListMsg{}
 	}
 }
