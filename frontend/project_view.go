@@ -114,7 +114,7 @@ func initProjectView(items []list.Item, input textinput.Model, pr *models.GormPr
 			m.keymap.back,
 		}
 	}
-	m.viewport = viewport.New(78, 40)
+	m.viewport = viewport.New(28, 40)
 	err := m.initEntries()
 	if err != nil {
 		log.Fatal(err)
