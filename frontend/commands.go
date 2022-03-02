@@ -1,6 +1,8 @@
 package frontend
 
 import (
+	"log"
+
 	"github.com/bashbunni/project-management/models"
 	"github.com/bashbunni/project-management/utils"
 	tea "github.com/charmbracelet/bubbletea"
@@ -38,6 +40,7 @@ func (m model) createEntryCmd(activeProject uint, er *models.GormEntryRepository
 		p.ReleaseTerminal()
 		err := er.CreateEntry(utils.CaptureInputFromFile(), activeProject)
 		if err != nil {
+			log.Print(err)
 			return errMsg{err}
 		}
 		p.RestoreTerminal()
