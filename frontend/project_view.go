@@ -61,6 +61,7 @@ func (m model) handleProjectList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (mode
 			case msg.String() == "ctrl+c":
 				return m, tea.Quit
 			case key.Matches(msg, m.keymap.enter):
+				m.initEntries()
 				m.state = "viewEntries"
 			case key.Matches(msg, m.keymap.rename):
 				m.mode = "edit"
@@ -113,10 +114,6 @@ func initProjectView(items []list.Item, input textinput.Model, pr *models.GormPr
 	}
 
 	m.viewport = viewport.New(8, 8)
-	err := m.initEntries()
-	if err != nil {
-		log.Fatal(err)
-	}
 	return m
 }
 
