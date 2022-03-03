@@ -35,6 +35,9 @@ func (m *model) initEntries() error {
 		BorderForeground(lipgloss.Color("62")).
 		PaddingRight(2)
 	content, err := getEntryMessagesByProjectIDAsSingleString(m.getActiveProjectID(), m.er)
+	if content == "" {
+		content = "There are no entries for this project :)"
+	}
 	if err != nil {
 		return err
 	}
