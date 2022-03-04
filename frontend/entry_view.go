@@ -3,6 +3,7 @@ package frontend
 import (
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -41,7 +42,7 @@ func (m *model) initEntries() error {
 	if err != nil {
 		return err
 	}
-	str, err := renderer.Render(content)
+	str, err := glamour.Render(content, "dark")
 	if err != nil {
 		return err
 	}

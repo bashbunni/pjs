@@ -12,7 +12,6 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -20,8 +19,7 @@ var docStyle = lipgloss.NewStyle().Margin(1, 2)
 var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
 var (
-	p        *tea.Program
-	renderer *glamour.TermRenderer
+	p *tea.Program
 )
 
 // implements tea.Model (Init, Update, View)
@@ -44,7 +42,7 @@ type keymap struct {
 	back   key.Binding
 }
 
-// The entry point for the UI. Initializes the model.
+// StartTea the entry point for the UI. Initializes the model.
 func StartTea(pr models.GormProjectRepository, er models.GormEntryRepository) {
 	if os.Getenv("HELP_DEBUG") != "" {
 		if f, err := tea.LogToFile("debug.log", "help"); err != nil {
@@ -60,14 +58,6 @@ func StartTea(pr models.GormProjectRepository, er models.GormEntryRepository) {
 	input.Placeholder = "Project name..."
 	input.CharLimit = 250
 	input.Width = 50
-
-	var err error
-	renderer, err = glamour.NewTermRenderer(
-		glamour.WithStylePath("dracula"),
-	)
-	if err != nil {
-		panic(err)
-	}
 
 	projects, err := pr.GetAllProjects()
 	if err != nil {
