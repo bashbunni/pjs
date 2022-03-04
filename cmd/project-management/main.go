@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/bashbunni/project-management/models"
+	"github.com/bashbunni/project-management/entry"
+	"github.com/bashbunni/project-management/project"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
 // projectPrompt: input validation to create new projects or edit existing
-func projectPrompt(pr models.ProjectRepository) models.Project {
+func projectPrompt(pr project.Repository) project.Project {
 	var input int
 	pr.PrintProjects()
 	fmt.Println("Project ID: ")
@@ -29,7 +30,7 @@ func openSqlite() *gorm.DB {
 	if err != nil {
 		log.Fatalf("unable to open database: %v", err)
 	}
-	db.AutoMigrate(&models.Entry{}, &models.Project{})
+	db.AutoMigrate(&entry.Entry{}, &project.Project{})
 	return db
 }
 

@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/bashbunni/project-management/models"
-	"github.com/bashbunni/project-management/outputs"
+	"github.com/bashbunni/project-management/entry"
+	"github.com/bashbunni/project-management/project"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -28,8 +28,8 @@ type model struct {
 	viewport viewport.Model
 	list     list.Model
 	input    textinput.Model
-	pr       *models.GormProjectRepository
-	er       *models.GormEntryRepository
+	pr       *project.GormRepository
+	er       *entry.GormRepository
 	keymap   keymap
 	mode     string
 }
@@ -43,7 +43,7 @@ type keymap struct {
 }
 
 // StartTea the entry point for the UI. Initializes the model.
-func StartTea(pr models.GormProjectRepository, er models.GormEntryRepository) {
+func StartTea(pr project.GormRepository, er entry.GormRepository) {
 	if os.Getenv("HELP_DEBUG") != "" {
 		if f, err := tea.LogToFile("debug.log", "help"); err != nil {
 			fmt.Println("Couldn't open a file for logging:", err)
@@ -113,10 +113,10 @@ func (m model) View() string {
 	}
 }
 
-func getEntryMessagesByProjectIDAsSingleString(id uint, er *models.GormEntryRepository) (string, error) {
+func getEntryMessagesByProjectIDAsSingleString(id uint, er *entry.GormRepository) (string, error) {
 	entries, err := er.GetEntriesByProjectID(id)
 	if err != nil {
 		return "", err
 	}
-	return string(outputs.FormattedOutputFromEntries(entries)), nil
+	return string(entry.FormattedOutputFromEntries(entries)), nil
 }

@@ -5,17 +5,32 @@ import (
 	"log"
 	"os"
 	"os/exec"
+
+	"github.com/pkg/errors"
 )
 
-// OpenFileInEditor: a new file in nvim or default editor; helper function
-func OpenFileInEditor(filename string) (err error) {
+// CaptureInputFromFile capture user input from within their text editor
+func CaptureInputFromFile() []byte {
+	file := createFile()
+	filename := file.Name()
+	defer os.Remove(filename)
+	if err := file.Close(); err != nil {
+		log.Fatalf("Unable to close temp file: %v\n", err)
+	}
+	if err := openFileInEditor(filename); err != nil {
+		log.Fatalf("Unable to open editor: %v\n", err)
+	}
+	return readFile(filename)
+}
+
+func openFileInEditor(filename string) (err error) {
 	editor := os.Getenv("EDITOR")
 	if editor == "" {
 		editor = "nvim"
 	}
 	exe, err := exec.LookPath(editor)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "cannot open editor")
 	}
 	cmd := exec.Command(exe, filename)
 	cmd.Stdin = os.Stdin
@@ -24,7 +39,7 @@ func OpenFileInEditor(filename string) (err error) {
 	return cmd.Run()
 }
 
-func CreateFile() *os.File {
+func createFile() *os.File {
 	file, err := ioutil.TempFile(os.TempDir(), "*")
 	if err != nil {
 		log.Fatalf("Unable to create new file: %v\n", err)
@@ -32,24 +47,11 @@ func CreateFile() *os.File {
 	return file
 }
 
-func ReadFile(filename string) []byte {
+func readFile(filename string) []byte {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatalf("Unable to read temp file: %v\n", err)
+		// TODO: do better error handling
 	}
 	return bytes
-}
-
-// CaptureInputFromFile: temp file, edit it, delete it
-func CaptureInputFromFile() []byte {
-	file := CreateFile()
-	filename := file.Name()
-	defer os.Remove(filename)
-	if err := file.Close(); err != nil {
-		log.Fatalf("Unable to close temp file: %v\n", err)
-	}
-	if err := OpenFileInEditor(filename); err != nil {
-		log.Fatalf("Unable to open editor: %v\n", err)
-	}
-	return ReadFile(filename)
 }

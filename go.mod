@@ -2,8 +2,6 @@ module github.com/bashbunni/project-management
 
 go 1.17
 
-replace github.com/bashbunni/project-management/models => ./models
-
 require (
 	github.com/charmbracelet/bubbles v0.10.2
 	github.com/charmbracelet/bubbletea v0.20.1-0.20220301222809-b96d11cbbb86
