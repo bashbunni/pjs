@@ -102,8 +102,8 @@ func TestGetProjectFromEmptyDB(t *testing.T) {
 	pr := GormRepository{DB: db}
 
 	_, err := pr.GetProjectByID(1)
-	if err != gorm.ErrRecordNotFound {
-		t.Error("expected to get ErrRecordNotFound")
+	if err == nil {
+		t.Error("expected an error")
 	}
 }
 
