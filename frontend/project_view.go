@@ -3,7 +3,8 @@ package frontend
 import (
 	"log"
 
-	"github.com/bashbunni/project-management/models"
+	"github.com/bashbunni/project-management/entry"
+	"github.com/bashbunni/project-management/project"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -70,7 +71,7 @@ func (m model) handleProjectList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (mode
 			case key.Matches(msg, m.keymap.delete):
 				items := m.list.Items()
 				activeItem := items[m.list.Index()]
-				cmds = append(cmds, deleteProjectCmd(activeItem.(models.Project).ID, m.pr))
+				cmds = append(cmds, deleteProjectCmd(activeItem.(project.Project).ID, m.pr))
 			}
 			m.list, cmd = m.list.Update(msg)
 			cmds = append(cmds, cmd)
@@ -79,7 +80,7 @@ func (m model) handleProjectList(msg tea.Msg, cmds []tea.Cmd, cmd tea.Cmd) (mode
 	return m, tea.Batch(cmds...)
 }
 
-func initProjectView(items []list.Item, input textinput.Model, pr *models.GormProjectRepository, er *models.GormEntryRepository) tea.Model {
+func initProjectView(items []list.Item, input textinput.Model, pr *project.GormRepository, er *entry.GormRepository) tea.Model {
 	m := model{state: "viewProjectList", list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), input: input, pr: pr, er: er, keymap: keymap{
 		create: key.NewBinding(
 			key.WithKeys("c"),
@@ -119,7 +120,7 @@ func initProjectView(items []list.Item, input textinput.Model, pr *models.GormPr
 
 // TODO: use generics
 // convert []model.Project to []list.Item
-func projectsToItems(projects []models.Project) []list.Item {
+func projectsToItems(projects []project.Project) []list.Item {
 	items := make([]list.Item, len(projects))
 	for i, proj := range projects {
 		items[i] = list.Item(proj)
@@ -130,5 +131,5 @@ func projectsToItems(projects []models.Project) []list.Item {
 func (m model) getActiveProjectID() uint {
 	items := m.list.Items()
 	activeItem := items[m.list.Index()]
-	return activeItem.(models.Project).ID
+	return activeItem.(project.Project).ID
 }
