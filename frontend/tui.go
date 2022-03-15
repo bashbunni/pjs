@@ -13,7 +13,9 @@ import (
 )
 
 var (
-	p *tea.Program
+	p    *tea.Program
+	cmd  tea.Cmd
+	cmds []tea.Cmd
 )
 
 type sessionState int
@@ -50,7 +52,8 @@ func StartTea(pr project.GormRepository, er entry.GormRepository) {
 	input.CharLimit = 250
 	input.Width = 50
 
-	m := projectui.New(input, &pr, &er, "projects")
+	m := mainModel{}
+	m.project = *projectui.New(input, &pr, &er, "projects")
 	p = tea.NewProgram(m)
 	p.EnterAltScreen()
 	if err := p.Start(); err != nil {
@@ -60,19 +63,31 @@ func StartTea(pr project.GormRepository, er entry.GormRepository) {
 }
 
 func (m mainModel) Init() tea.Cmd {
+	m.state = projectView
 	return nil
 }
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	var cmds []tea.Cmd
 	switch m.state {
 	case projectView:
 		// update View
-		m.project, cmd = m.project.Update(msg)
+		newModel, newCmd := m.project.Update(msg)
+		projectModel, ok := newModel.(projectui.Model)
+		if !ok {
+			panic("could not perform assertion on project model")
+		}
+		m.project = projectModel
+		cmd = newCmd
 	case entryView:
 		// init entry view
-		m.entry = entryui.New()
-		m.entry.Update(msg)
+		// TODO: add getActiveProjectID
+		newModel, newCmd := m.entry.Update(msg)
+		entryModel, ok := newModel.(entryui.Model)
+		if !ok {
+			panic("could not perform assertion on entry model")
+		}
+		m.entry = entryModel
+		cmd = newCmd
 	}
 	return m, tea.Batch(cmds...)
 }
