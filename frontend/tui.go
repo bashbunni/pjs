@@ -2,44 +2,35 @@ package frontend
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/bashbunni/project-management/entry"
+	"github.com/bashbunni/project-management/frontend/entryui"
+	"github.com/bashbunni/project-management/frontend/projectui"
 	"github.com/bashbunni/project-management/project"
-	"github.com/charmbracelet/bubbles/key"
-	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
-	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
-
-var docStyle = lipgloss.NewStyle().Margin(1, 2)
-var helpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
 var (
 	p *tea.Program
 )
 
-// implements tea.Model (Init, Update, View)
-type model struct {
-	state    string
-	viewport viewport.Model
-	list     list.Model
-	input    textinput.Model
-	pr       *project.GormRepository
-	er       *entry.GormRepository
-	keymap   keymap
-	mode     string
-}
+type sessionState int
 
-type keymap struct {
-	create key.Binding
-	enter  key.Binding
-	rename key.Binding
-	delete key.Binding
-	back   key.Binding
+const (
+	projectView sessionState = iota
+	entryView
+)
+
+// implements tea.Model (Init, Update, View)
+type mainModel struct {
+	state   sessionState
+	project projectui.Model
+	entry   entryui.Model
+	pr      *project.GormRepository
+	er      *entry.GormRepository
+	mode    string
 }
 
 // StartTea the entry point for the UI. Initializes the model.
@@ -59,12 +50,7 @@ func StartTea(pr project.GormRepository, er entry.GormRepository) {
 	input.CharLimit = 250
 	input.Width = 50
 
-	projects, err := pr.GetAllProjects()
-	if err != nil {
-		log.Fatal(err)
-	}
-	items := projectsToItems(projects)
-	m := initProjectView(items, input, &pr, &er)
+	m := projectui.New(input, &pr, &er, "projects")
 	p = tea.NewProgram(m)
 	p.EnterAltScreen()
 	if err := p.Start(); err != nil {
@@ -73,50 +59,24 @@ func StartTea(pr project.GormRepository, er entry.GormRepository) {
 	}
 }
 
-func (m model) Init() tea.Cmd {
+func (m mainModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
-	var cmd tea.Cmd
-
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		// update entry view size
-		m.viewport.Width = msg.Width
-		m.viewport.Height = msg.Height - 8
-
-		// update list size
-		top, right, bottom, left := docStyle.GetMargin()
-		m.list.SetSize(msg.Width-left-right, msg.Height-top-bottom-1)
-	}
-
 	switch m.state {
-	case "viewProjectList":
-		return m.handleProjectList(msg, cmds, cmd)
-	case "viewEntries":
-		return m.handleEntriesList(msg, cmds, cmd)
+	case projectView:
+		// update View
+		m.project, cmd = m.project.Update(msg)
+	case entryView:
+		// init entry view
+		m.entry = entryui.New()
+		m.entry.Update(msg)
 	}
 	return m, tea.Batch(cmds...)
 }
 
-func (m model) View() string {
-	switch m.state {
-	case "viewEntries":
-		return docStyle.Render(m.viewport.View() + m.helpView())
-	default:
-		if m.input.Focused() {
-			return docStyle.Render(m.list.View() + "\n" + m.input.View())
-		}
-		return docStyle.Render(m.list.View() + "\n")
-	}
-}
-
-func getEntryMessagesByProjectIDAsSingleString(id uint, er *entry.GormRepository) (string, error) {
-	entries, err := er.GetEntriesByProjectID(id)
-	if err != nil {
-		return "", err
-	}
-	return string(entry.FormattedOutputFromEntries(entries)), nil
+func (m mainModel) View() string {
+	return m.project.View()
 }
