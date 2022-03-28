@@ -19,17 +19,20 @@ var (
 	cmds []tea.Cmd
 )
 
+type SelectMsg struct {
+	ActiveProjectID uint
+}
+
 type Model struct {
 	mode  string
 	list  list.Model
 	input textinput.Model
 	pr    *project.GormRepository
-	state string
 }
 
-func New(input textinput.Model, pr *project.GormRepository, er *entry.GormRepository, state string) *Model {
+func New(input textinput.Model, pr *project.GormRepository, er *entry.GormRepository, state string) tea.Model {
 	items := newProjectList(pr)
-	m := Model{mode: "", list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), input: input, pr: pr, state: state}
+	m := Model{mode: "", list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), input: input, pr: pr}
 	m.list.Title = "projects"
 	m.list.AdditionalShortHelpKeys = func() []key.Binding {
 		return []key.Binding{
@@ -39,7 +42,7 @@ func New(input textinput.Model, pr *project.GormRepository, er *entry.GormReposi
 			constants.Keymap.Back,
 		}
 	}
-	return &m
+	return m
 }
 
 func newProjectList(pr *project.GormRepository) []list.Item {
@@ -106,8 +109,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case msg.String() == "ctrl+c":
 				return m, tea.Quit
 			case key.Matches(msg, constants.Keymap.Enter):
-				m.state = "entries"
-				// TODO: do I need to return m?
+				return m, func() tea.Msg {
+					return SelectMsg{ActiveProjectID: m.getActiveProjectID()}
+				}
 			case key.Matches(msg, constants.Keymap.Rename):
 				m.mode = "edit"
 				m.input.Focus()

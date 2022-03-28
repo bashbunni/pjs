@@ -27,12 +27,13 @@ const (
 
 // implements tea.Model (Init, Update, View)
 type mainModel struct {
-	state   sessionState
-	project projectui.Model
-	entry   entryui.Model
-	pr      *project.GormRepository
-	er      *entry.GormRepository
-	mode    string
+	state           sessionState
+	project         tea.Model
+	entry           tea.Model
+	pr              *project.GormRepository
+	er              *entry.GormRepository
+	mode            string
+	activeProjectID uint
 }
 
 // StartTea the entry point for the UI. Initializes the model.
@@ -52,8 +53,7 @@ func StartTea(pr project.GormRepository, er entry.GormRepository) {
 	input.CharLimit = 250
 	input.Width = 50
 
-	m := mainModel{}
-	m.project = *projectui.New(input, &pr, &er, "projects")
+	m := projectui.New(input, &pr, &er, "projects")
 	p = tea.NewProgram(m)
 	p.EnterAltScreen()
 	if err := p.Start(); err != nil {
@@ -63,28 +63,34 @@ func StartTea(pr project.GormRepository, er entry.GormRepository) {
 }
 
 func (m mainModel) Init() tea.Cmd {
-	m.state = projectView
 	return nil
 }
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
+	switch msg := msg.(type) {
+	case entryui.BackMsg:
+		m.state = projectView
+	case projectui.SelectMsg:
+		m.activeProjectID = msg.ActiveProjectID
+		m.state = entryView
+	}
+
 	switch m.state {
 	case projectView:
-		// update View
-		newModel, newCmd := m.project.Update(msg)
-		projectModel, ok := newModel.(projectui.Model)
+		newProject, newCmd := m.project.Update(msg)
+		projectModel, ok := newProject.(projectui.Model)
 		if !ok {
-			panic("could not perform assertion on project model")
+			panic("could not perform assertion on projectui model")
 		}
 		m.project = projectModel
 		cmd = newCmd
 	case entryView:
-		// init entry view
-		// TODO: add getActiveProjectID
-		newModel, newCmd := m.entry.Update(msg)
-		entryModel, ok := newModel.(entryui.Model)
+		m.entry = *entryui.New(m.er, m.activeProjectID, p)
+		newEntry, newCmd := m.entry.Update(msg)
+		entryModel, ok := newEntry.(entryui.Model)
 		if !ok {
-			panic("could not perform assertion on entry model")
+			panic("could not perform assertion on projectui model")
 		}
 		m.entry = entryModel
 		cmd = newCmd

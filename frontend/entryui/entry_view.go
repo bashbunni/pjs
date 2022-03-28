@@ -15,20 +15,23 @@ var (
 	cmds []tea.Cmd
 )
 
+type BackMsg bool
+
 type Model struct {
-	state           string
 	viewport        viewport.Model
 	er              *entry.GormRepository
 	activeProjectID uint
 	cmds            []tea.Cmd
 	p               *tea.Program
-}
-
-func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *Model {
-	return &Model{}
+	error           string
 }
 
 func (m Model) Init() tea.Cmd {
+	return nil
+}
+
+func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *Model {
+	m := Model{er: er, activeProjectID: activeProjectID}
 	vp := viewport.New(8, 8)
 	m.viewport = vp
 	m.viewport.Style = lipgloss.NewStyle().
@@ -40,14 +43,14 @@ func (m Model) Init() tea.Cmd {
 		content = "There are no entries for this project :)"
 	}
 	if err != nil {
-		return err
+		m.error = "cannot get entry messages as single string"
 	}
 	str, err := glamour.Render(content, "dark")
 	if err != nil {
-		return err
+		m.error = "could not render content with glamour"
 	}
 	m.viewport.SetContent(str)
-	return nil
+	return &m
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -62,7 +65,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, constants.Keymap.Create):
 			cmds = append(cmds, m.createEntryCmd(m.activeProjectID, m.er))
 		case key.Matches(msg, constants.Keymap.Back):
-			m.state = "projects"
+			return m, func() tea.Msg {
+				return BackMsg(true)
+			}
 		case msg.String() == "ctrl+c":
 			return m, tea.Quit
 		case msg.String() == "q":
