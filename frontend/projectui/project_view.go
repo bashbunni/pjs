@@ -14,11 +14,6 @@ import (
 
 // TODO: add multi-page navigation
 
-var (
-	cmd  tea.Cmd
-	cmds []tea.Cmd
-)
-
 type SelectMsg struct {
 	ActiveProjectID uint
 }
@@ -59,6 +54,8 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		top, right, bottom, left := constants.DocStyle.GetMargin()
@@ -72,12 +69,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.list.SetItems(items)
 		m.mode = ""
 	case renameProjectMsg:
-		projects, err := m.pr.GetAllProjects()
-		if err != nil {
-			log.Fatal(err)
-		}
-		items := projectsToItems(projects)
-		m.list.SetItems(items)
+		m.list.SetItems(msg)
 		m.mode = ""
 	case tea.KeyMsg:
 		if m.input.Focused() {
@@ -109,20 +101,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case msg.String() == "ctrl+c":
 				return m, tea.Quit
 			case key.Matches(msg, constants.Keymap.Enter):
-				return m, func() tea.Msg {
-					return SelectMsg{ActiveProjectID: m.getActiveProjectID()}
-				}
+				return m, selectProjectCmd(m.getActiveProjectID())
 			case key.Matches(msg, constants.Keymap.Rename):
 				m.mode = "edit"
 				m.input.Focus()
 				cmds = append(cmds, textinput.Blink)
 			case key.Matches(msg, constants.Keymap.Delete):
-				items := m.list.Items()
-				activeItem := items[m.list.Index()]
-				cmds = append(cmds, deleteProjectCmd(activeItem.(project.Project).ID, m.pr))
+				cmds = append(cmds, deleteProjectCmd(m.getActiveProjectID(), m.pr))
+			default:
+				m.list, cmd = m.list.Update(msg)
+				cmds = append(cmds, cmd)
 			}
-			m.list, cmd = m.list.Update(msg)
-			cmds = append(cmds, cmd)
 		}
 	}
 	return m, tea.Batch(cmds...)

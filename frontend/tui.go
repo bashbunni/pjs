@@ -85,19 +85,27 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.project = projectModel
 		cmd = newCmd
+		return m, cmd
 	case entryView:
 		m.entry = *entryui.New(m.er, m.activeProjectID, p)
 		newEntry, newCmd := m.entry.Update(msg)
 		entryModel, ok := newEntry.(entryui.Model)
 		if !ok {
-			panic("could not perform assertion on projectui model")
+			panic("could not perform assertion on entryui model")
 		}
 		m.entry = entryModel
 		cmd = newCmd
+		return m, cmd
 	}
+	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
 }
 
 func (m mainModel) View() string {
-	return m.project.View()
+	switch m.state {
+	case entryView:
+		return m.entry.View()
+	default:
+		return m.project.View()
+	}
 }

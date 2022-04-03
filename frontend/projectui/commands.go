@@ -18,7 +18,13 @@ func createProjectCmd(name string, pr *project.GormRepository) tea.Cmd {
 func renameProjectCmd(id uint, pr *project.GormRepository, name string) tea.Cmd {
 	return func() tea.Msg {
 		pr.RenameProject(id, name)
-		return renameProjectMsg{}
+		projects, err := pr.GetAllProjects()
+		if err != nil {
+			return errMsg{err}
+		}
+		items := projectsToItems(projects)
+
+		return renameProjectMsg(items)
 	}
 }
 
@@ -29,5 +35,11 @@ func deleteProjectCmd(id uint, pr *project.GormRepository) tea.Cmd {
 			return errMsg{err}
 		}
 		return updateProjectListMsg{}
+	}
+}
+
+func selectProjectCmd(ActiveProjectID uint) tea.Cmd {
+	return func() tea.Msg {
+		return SelectMsg{ActiveProjectID: ActiveProjectID}
 	}
 }
