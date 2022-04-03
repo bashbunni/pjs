@@ -25,7 +25,13 @@ type Model struct {
 	pr    *project.GormRepository
 }
 
-func New(input textinput.Model, pr *project.GormRepository, er *entry.GormRepository, state string) tea.Model {
+func New(pr *project.GormRepository, er *entry.GormRepository) tea.Model {
+	input := textinput.New()
+	input.Prompt = "$ "
+	input.Placeholder = "Project name..."
+	input.CharLimit = 250
+	input.Width = 50
+
 	items := newProjectList(pr)
 	m := Model{mode: "", list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), input: input, pr: pr}
 	m.list.Title = "projects"
@@ -97,21 +103,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, constants.Keymap.Create):
 				m.mode = "create"
 				m.input.Focus()
-				cmds = append(cmds, textinput.Blink)
+				cmd = textinput.Blink
 			case msg.String() == "ctrl+c":
 				return m, tea.Quit
 			case key.Matches(msg, constants.Keymap.Enter):
-				return m, selectProjectCmd(m.getActiveProjectID())
+				cmd = selectProjectCmd(m.getActiveProjectID())
 			case key.Matches(msg, constants.Keymap.Rename):
 				m.mode = "edit"
 				m.input.Focus()
-				cmds = append(cmds, textinput.Blink)
+				cmd = textinput.Blink
 			case key.Matches(msg, constants.Keymap.Delete):
-				cmds = append(cmds, deleteProjectCmd(m.getActiveProjectID(), m.pr))
+				cmd = deleteProjectCmd(m.getActiveProjectID(), m.pr)
 			default:
 				m.list, cmd = m.list.Update(msg)
-				cmds = append(cmds, cmd)
 			}
+			cmds = append(cmds, cmd)
 		}
 	}
 	return m, tea.Batch(cmds...)

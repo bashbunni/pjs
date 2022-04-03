@@ -8,14 +8,11 @@ import (
 	"github.com/bashbunni/project-management/frontend/entryui"
 	"github.com/bashbunni/project-management/frontend/projectui"
 	"github.com/bashbunni/project-management/project"
-	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 var (
-	p    *tea.Program
-	cmd  tea.Cmd
-	cmds []tea.Cmd
+	p *tea.Program
 )
 
 type sessionState int
@@ -32,7 +29,6 @@ type mainModel struct {
 	entry           tea.Model
 	pr              *project.GormRepository
 	er              *entry.GormRepository
-	mode            string
 	activeProjectID uint
 }
 
@@ -47,13 +43,7 @@ func StartTea(pr project.GormRepository, er entry.GormRepository) {
 		}
 	}
 
-	input := textinput.New()
-	input.Prompt = "$ "
-	input.Placeholder = "Project name..."
-	input.CharLimit = 250
-	input.Width = 50
-
-	m := projectui.New(input, &pr, &er, "projects")
+	m := New(&pr, &er)
 	p = tea.NewProgram(m)
 	p.EnterAltScreen()
 	if err := p.Start(); err != nil {
@@ -62,11 +52,21 @@ func StartTea(pr project.GormRepository, er entry.GormRepository) {
 	}
 }
 
+func New(pr *project.GormRepository, er *entry.GormRepository) mainModel {
+	return mainModel{
+		state:   projectView,
+		project: projectui.New(pr, er),
+		pr:      pr,
+		er:      er,
+	}
+}
+
 func (m mainModel) Init() tea.Cmd {
 	return nil
 }
 
 func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case entryui.BackMsg:
@@ -85,7 +85,6 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.project = projectModel
 		cmd = newCmd
-		return m, cmd
 	case entryView:
 		m.entry = *entryui.New(m.er, m.activeProjectID, p)
 		newEntry, newCmd := m.entry.Update(msg)
@@ -95,7 +94,6 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.entry = entryModel
 		cmd = newCmd
-		return m, cmd
 	}
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)
