@@ -4,8 +4,8 @@ import (
 	"log"
 
 	"github.com/bashbunni/project-management/entry"
-	"github.com/bashbunni/project-management/frontend"
 	"github.com/bashbunni/project-management/project"
+	"github.com/bashbunni/project-management/tui"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -30,6 +30,6 @@ func main() {
 		name := project.NewProjectPrompt()
 		pr.CreateProject(name)
 	} else {
-		frontend.StartTea(pr, entry.GormRepository{DB: db})
+		tui.StartTea(pr, entry.GormRepository{DB: db})
 	}
 }

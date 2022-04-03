@@ -1,4 +1,4 @@
-package frontend
+package tui
 
 import (
 	"fmt"
