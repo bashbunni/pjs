@@ -2,7 +2,7 @@ package entryui
 
 import (
 	"github.com/bashbunni/project-management/entry"
-	"github.com/bashbunni/project-management/frontend/constants"
+	"github.com/bashbunni/project-management/tui/constants"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,8 +15,10 @@ var (
 	cmds []tea.Cmd
 )
 
+// BackMsg change state back to project view
 type BackMsg bool
 
+// Model entryui model
 type Model struct {
 	viewport        viewport.Model
 	er              *entry.GormRepository
@@ -26,10 +28,12 @@ type Model struct {
 	error           string
 }
 
+// Init run any intial IO on program start
 func (m Model) Init() tea.Cmd {
 	return nil
 }
 
+// New initialize the entryui model for your program
 func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *Model {
 	m := Model{er: er, activeProjectID: activeProjectID}
 	vp := viewport.New(8, 8)
@@ -53,6 +57,7 @@ func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *Model 
 	return &m
 }
 
+// Update handle IO and commands
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -84,6 +89,7 @@ func (m Model) helpView() string {
 	return constants.HelpStyle("\n ↑/↓: navigate  • esc: back • c: create entry • d: delete entry • q: quit\n")
 }
 
+// View return the text UI to be output to the terminal
 func (m Model) View() string {
 	return constants.DocStyle.Render(m.viewport.View() + m.helpView())
 }

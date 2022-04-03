@@ -5,7 +5,10 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// DocStyle styling for viewports
 var DocStyle = lipgloss.NewStyle().Margin(1, 2)
+
+// HelpStyle styling for help context menu
 var HelpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
 type keymap struct {
@@ -16,6 +19,7 @@ type keymap struct {
 	Back   key.Binding
 }
 
+// Keymap reusable key mappings shared across models
 var Keymap = keymap{
 	Create: key.NewBinding(
 		key.WithKeys("c"),

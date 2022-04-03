@@ -4,8 +4,8 @@ import (
 	"log"
 
 	"github.com/bashbunni/project-management/entry"
-	"github.com/bashbunni/project-management/frontend/constants"
 	"github.com/bashbunni/project-management/project"
+	"github.com/bashbunni/project-management/tui/constants"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -14,10 +14,12 @@ import (
 
 // TODO: add multi-page navigation
 
+// SelectMsg the message to change the view to the selected entry
 type SelectMsg struct {
 	ActiveProjectID uint
 }
 
+// Model the entryui model definition
 type Model struct {
 	mode  string
 	list  list.Model
@@ -25,6 +27,7 @@ type Model struct {
 	pr    *project.GormRepository
 }
 
+// New initialize the projectui model for your program
 func New(pr *project.GormRepository, er *entry.GormRepository) tea.Model {
 	input := textinput.New()
 	input.Prompt = "$ "
@@ -52,13 +55,14 @@ func newProjectList(pr *project.GormRepository) []list.Item {
 		log.Fatal(err)
 	}
 	return projectsToItems(projects)
-
 }
 
+// Init run any intial IO on program start
 func (m Model) Init() tea.Cmd {
 	return nil
 }
 
+// Update handle IO and commands
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
@@ -123,6 +127,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
+// View return the text UI to be output to the terminal
 func (m Model) View() string {
 	if m.input.Focused() {
 		return constants.DocStyle.Render(m.list.View() + "\n" + m.input.View())
@@ -131,7 +136,7 @@ func (m Model) View() string {
 }
 
 // TODO: use generics
-// convert []model.Project to []list.Item
+// projectsToItems convert []model.Project to []list.Item
 func projectsToItems(projects []project.Project) []list.Item {
 	items := make([]list.Item, len(projects))
 	for i, proj := range projects {

@@ -5,9 +5,9 @@ import (
 	"os"
 
 	"github.com/bashbunni/project-management/entry"
-	"github.com/bashbunni/project-management/frontend/entryui"
-	"github.com/bashbunni/project-management/frontend/projectui"
 	"github.com/bashbunni/project-management/project"
+	"github.com/bashbunni/project-management/tui/entryui"
+	"github.com/bashbunni/project-management/tui/projectui"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -22,8 +22,8 @@ const (
 	entryView
 )
 
-// implements tea.Model (Init, Update, View)
-type mainModel struct {
+// MainModel the main model of the program; holds other models and bubbles
+type MainModel struct {
 	state           sessionState
 	project         tea.Model
 	entry           tea.Model
@@ -52,8 +52,9 @@ func StartTea(pr project.GormRepository, er entry.GormRepository) {
 	}
 }
 
-func New(pr *project.GormRepository, er *entry.GormRepository) mainModel {
-	return mainModel{
+// New initialize the main model for your program
+func New(pr *project.GormRepository, er *entry.GormRepository) MainModel {
+	return MainModel{
 		state:   projectView,
 		project: projectui.New(pr, er),
 		pr:      pr,
@@ -61,11 +62,13 @@ func New(pr *project.GormRepository, er *entry.GormRepository) mainModel {
 	}
 }
 
-func (m mainModel) Init() tea.Cmd {
+// Init run any intial IO on program start
+func (m MainModel) Init() tea.Cmd {
 	return nil
 }
 
-func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+// Update handle IO and commands
+func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
@@ -99,7 +102,8 @@ func (m mainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m mainModel) View() string {
+// View return the text UI to be output to the terminal
+func (m MainModel) View() string {
 	switch m.state {
 	case entryView:
 		return m.entry.View()
