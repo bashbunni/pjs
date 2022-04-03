@@ -10,17 +10,20 @@ import (
 )
 
 // CaptureInputFromFile capture user input from within their text editor
-func CaptureInputFromFile() []byte {
+func CaptureInputFromFile() ([]byte, error) {
+	var err error
 	file := createFile()
 	filename := file.Name()
-	defer os.Remove(filename)
+	defer func() {
+		err = os.Remove(filename)
+	}()
 	if err := file.Close(); err != nil {
 		log.Fatalf("Unable to close temp file: %v\n", err)
 	}
 	if err := openFileInEditor(filename); err != nil {
 		log.Fatalf("Unable to open editor: %v\n", err)
 	}
-	return readFile(filename)
+	return readFile(filename), err
 }
 
 func openFileInEditor(filename string) (err error) {

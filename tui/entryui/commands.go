@@ -10,13 +10,26 @@ import (
 
 func (m Model) createEntryCmd(activeProject uint, er *entry.GormRepository) tea.Cmd {
 	return func() tea.Msg {
-		m.p.ReleaseTerminal()
-		err := er.CreateEntry(utils.CaptureInputFromFile(), activeProject)
+		err := m.p.ReleaseTerminal()
 		if err != nil {
 			log.Print(err)
 			return errMsg{err}
 		}
-		m.p.RestoreTerminal()
+		input, err := utils.CaptureInputFromFile()
+		if err != nil {
+			log.Print(err)
+			return errMsg{err}
+		}
+		err = er.CreateEntry(input, activeProject)
+		if err != nil {
+			log.Print(err)
+			return errMsg{err}
+		}
+		err = m.p.RestoreTerminal()
+		if err != nil {
+			log.Print(err)
+			return errMsg{err}
+		}
 		return updateEntryListMsg{}
 	}
 }

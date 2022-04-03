@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/bashbunni/project-management/entry"
@@ -39,7 +40,12 @@ func StartTea(pr project.GormRepository, er entry.GormRepository) {
 			fmt.Println("Couldn't open a file for logging:", err)
 			os.Exit(1)
 		} else {
-			defer f.Close()
+			defer func() {
+				err = f.Close()
+				if err != nil {
+					log.Fatal(err)
+				}
+			}()
 		}
 	}
 

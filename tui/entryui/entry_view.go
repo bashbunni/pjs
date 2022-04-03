@@ -23,7 +23,6 @@ type Model struct {
 	viewport        viewport.Model
 	er              *entry.GormRepository
 	activeProjectID uint
-	cmds            []tea.Cmd
 	p               *tea.Program
 	error           string
 }

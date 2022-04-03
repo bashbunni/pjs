@@ -9,8 +9,7 @@ import (
 )
 
 const (
-	notFound uint   = 0
-	format   string = "%d : %s\n"
+	format string = "%d : %s\n"
 )
 
 // Project the project holds entries
