@@ -35,7 +35,7 @@ func (m Model) Init() tea.Cmd {
 // New initialize the entryui model for your program
 func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *Model {
 	m := Model{er: er, activeProjectID: activeProjectID}
-	vp := viewport.New(8, 8)
+	vp := viewport.New(78, 28)
 	m.viewport = vp
 	m.viewport.Style = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
@@ -58,10 +58,11 @@ func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *Model 
 
 // Update handle IO and commands
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// TODO: fix viewport sizing with keypresses and on init
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.viewport.Width = msg.Width
-		m.viewport.Height = msg.Height - 8
+		return m, nil
 	case updateEntryListMsg:
 		// update vp.SetContent
 	case tea.KeyMsg:
