@@ -12,9 +12,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var (
-	p *tea.Program
-)
+var p *tea.Program
 
 type sessionState int
 
@@ -95,7 +93,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.project = projectModel
 		cmd = newCmd
 	case entryView:
-		m.entry = *entryui.New(m.er, m.activeProjectID, p)
+		m.entry = entryui.New(m.er, m.activeProjectID, p)
 		newEntry, newCmd := m.entry.Update(msg)
 		entryModel, ok := newEntry.(entryui.Model)
 		if !ok {

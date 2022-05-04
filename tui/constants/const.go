@@ -11,6 +11,8 @@ var DocStyle = lipgloss.NewStyle().Margin(1, 2)
 // HelpStyle styling for help context menu
 var HelpStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("241")).Render
 
+var ErrStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#bd534b")).Render
+
 type keymap struct {
 	Create key.Binding
 	Enter  key.Binding

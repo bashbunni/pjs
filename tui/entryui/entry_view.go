@@ -10,10 +10,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var (
-	cmd  tea.Cmd
-	cmds []tea.Cmd
-)
+// TODO: move from ioutil to os/io -> e.g. os.CreateTemp
+
+var cmd tea.Cmd
 
 // BackMsg change state back to project view
 type BackMsg bool
@@ -35,12 +34,18 @@ func (m Model) Init() tea.Cmd {
 // New initialize the entryui model for your program
 func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *Model {
 	m := Model{er: er, activeProjectID: activeProjectID}
+	m.p = p
 	vp := viewport.New(78, 28)
 	m.viewport = vp
 	m.viewport.Style = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62")).
 		PaddingRight(2)
+	m.setViewportContent()
+	return &m
+}
+
+func (m *Model) setViewportContent() {
 	content, err := getEntryMessagesByProjectIDAsSingleString(m.activeProjectID, m.er)
 	if content == "" {
 		content = "There are no entries for this project :)"
@@ -53,7 +58,6 @@ func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *Model 
 		m.error = "could not render content with glamour"
 	}
 	m.viewport.SetContent(str)
-	return &m
 }
 
 // Update handle IO and commands
@@ -61,14 +65,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// TODO: fix viewport sizing with keypresses and on init
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.viewport.Width = msg.Width
+		m.viewport.Width = msg.Width - 1
+		m.viewport.Height = msg.Height - 4
 		return m, nil
+	case errMsg:
+		m.error = msg.Error()
+	case editorFinishedMsg:
+		if msg.err != nil {
+			return m, tea.Quit
+		}
+		cmd = m.createEntryCmd(msg.file)
 	case updateEntryListMsg:
-		// update vp.SetContent
+		return m, m.updateEntriesCmd
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, constants.Keymap.Create):
-			cmds = append(cmds, m.createEntryCmd(m.activeProjectID, m.er))
+			return m, openEditorCmd()
 		case key.Matches(msg, constants.Keymap.Back):
 			return m, func() tea.Msg {
 				return BackMsg(true)
@@ -79,19 +91,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		default:
 			m.viewport, cmd = m.viewport.Update(msg)
-			cmds = append(cmds, cmd)
 		}
 	}
-	return m, tea.Batch(cmds...)
+	return m, cmd
 }
 
 func (m Model) helpView() string {
 	return constants.HelpStyle("\n ↑/↓: navigate  • esc: back • c: create entry • d: delete entry • q: quit\n")
 }
 
+func (m Model) errorView() string {
+	return constants.ErrStyle(m.error)
+}
+
 // View return the text UI to be output to the terminal
 func (m Model) View() string {
-	return constants.DocStyle.Render(m.viewport.View() + m.helpView())
+	formatted := lipgloss.JoinVertical(lipgloss.Left, m.viewport.View(), m.helpView(), m.errorView())
+	return constants.DocStyle.Render(formatted)
 }
 
 func getEntryMessagesByProjectIDAsSingleString(id uint, er *entry.GormRepository) (string, error) {

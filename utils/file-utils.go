@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"fmt"
 
 	"github.com/pkg/errors"
 )
@@ -12,7 +13,7 @@ import (
 // CaptureInputFromFile capture user input from within their text editor
 func CaptureInputFromFile() ([]byte, error) {
 	var err error
-	file := createFile()
+	file := CreateTempFile()
 	filename := file.Name()
 	defer func() {
 		err = os.Remove(filename)
@@ -23,7 +24,10 @@ func CaptureInputFromFile() ([]byte, error) {
 	if err := openFileInEditor(filename); err != nil {
 		log.Fatalf("Unable to open editor: %v\n", err)
 	}
-	return readFile(filename), err
+	if err != nil {
+		return []byte(""), err
+	}
+	return ReadFile(filename)
 }
 
 func openFileInEditor(filename string) (err error) {
@@ -42,7 +46,7 @@ func openFileInEditor(filename string) (err error) {
 	return cmd.Run()
 }
 
-func createFile() *os.File {
+func CreateTempFile() *os.File {
 	file, err := ioutil.TempFile(os.TempDir(), "*")
 	if err != nil {
 		log.Fatalf("Unable to create new file: %v\n", err)
@@ -50,11 +54,10 @@ func createFile() *os.File {
 	return file
 }
 
-func readFile(filename string) []byte {
+func ReadFile(filename string) ([]byte, error) {
 	bytes, err := ioutil.ReadFile(filename)
 	if err != nil {
-		log.Fatalf("Unable to read temp file: %v\n", err)
-		// TODO: do better error handling
+		return []byte(""), errors.Wrap(err, fmt.Sprintf("Unable to read temp file: %s\n", filename))
 	}
-	return bytes
+	return bytes, nil
 }
