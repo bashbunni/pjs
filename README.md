@@ -3,10 +3,6 @@
 *A tool for per-project timestamped work logging.*
 The point is so that when your boss asks you seven months later why you made a very specific design decision, you can send them the whole list of progress updates on the project throughout its lifecycle. 
 
-## Status
-- [ ] create entry -> functionality is blocked by [this issue](https://github.com/charmbracelet/bubbletea/issues/171)
-    - in the meantime, you can create entries by running the project with a subcommand (any subcommand works e.g. `./project-management e`) and it will start the entrypoint to create an entry
-
 ## Build Instructions
 
 This project tracker can be built with `go build -o <outdir/executablefilename>`
