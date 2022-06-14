@@ -12,16 +12,24 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// TODO: add multi-page navigation
+// TODO: add pagination
 
 // SelectMsg the message to change the view to the selected entry
 type SelectMsg struct {
 	ActiveProjectID uint
 }
 
+type mode int
+
+const (
+	nav mode = iota
+	edit
+	create
+)
+
 // Model the entryui model definition
 type Model struct {
-	mode  string
+	mode  mode
 	list  list.Model
 	input textinput.Model
 	pr    *project.GormRepository
@@ -36,7 +44,7 @@ func New(pr *project.GormRepository, er *entry.GormRepository) tea.Model {
 	input.Width = 50
 
 	items := newProjectList(pr)
-	m := Model{mode: "", list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), input: input, pr: pr}
+	m := Model{mode: nav, list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), input: input, pr: pr}
 	m.list.Title = "projects"
 	m.list.AdditionalShortHelpKeys = func() []key.Binding {
 		return []key.Binding{
@@ -77,26 +85,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		items := projectsToItems(projects)
 		m.list.SetItems(items)
-		m.mode = ""
+		m.mode = nav
 	case renameProjectMsg:
 		m.list.SetItems(msg)
-		m.mode = ""
+		m.mode = nav
 	case tea.KeyMsg:
 		if m.input.Focused() {
 			if key.Matches(msg, constants.Keymap.Enter) {
-				if m.mode == "create" {
+				if m.mode == create {
 					cmds = append(cmds, createProjectCmd(m.input.Value(), m.pr))
 				}
-				if m.mode == "edit" {
+				if m.mode == edit {
 					cmds = append(cmds, renameProjectCmd(m.getActiveProjectID(), m.pr, m.input.Value()))
 				}
 				m.input.SetValue("")
-				m.mode = ""
+				m.mode = nav
 				m.input.Blur()
 			}
 			if key.Matches(msg, constants.Keymap.Back) {
 				m.input.SetValue("")
-				m.mode = ""
+				m.mode = nav
 				m.input.Blur()
 			}
 			// only log keypresses for the input field when it's focused
@@ -105,7 +113,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			switch {
 			case key.Matches(msg, constants.Keymap.Create):
-				m.mode = "create"
+				m.mode = create
 				m.input.Focus()
 				cmd = textinput.Blink
 			case msg.String() == "ctrl+c":
@@ -113,7 +121,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, constants.Keymap.Enter):
 				cmd = selectProjectCmd(m.getActiveProjectID())
 			case key.Matches(msg, constants.Keymap.Rename):
-				m.mode = "edit"
+				m.mode = edit
 				m.input.Focus()
 				cmd = textinput.Blink
 			case key.Matches(msg, constants.Keymap.Delete):
