@@ -9,7 +9,7 @@ require (
 	github.com/charmbracelet/lipgloss v0.5.0
 	github.com/pkg/errors v0.9.1
 	gorm.io/driver/sqlite v1.3.2
-	gorm.io/gorm v1.23.5
+	gorm.io/gorm v1.23.6
 )
 
 require (
