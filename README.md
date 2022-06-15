@@ -1,3 +1,6 @@
+# PJ - Project Journal
+
+Staying organized in the easiest way possible.
 
 ## Purpose
 *A tool for per-project timestamped work logging.*
@@ -16,9 +19,8 @@ ex.
 you can execute the file by running `./project-management "my message"`
 
 ## Running the Program
-navigate to cmd/project-management and run either `go run .` to run the program or `go build` to build the program binary.
+navigate to the root directory of the project and run either `go run .` to run the program or `go build` to build the program binary.
 If you built the binary, you can run it with `./project-management` or even add it to your PATH so you can just run `project-management` from anywhere. 
 
 ## Collaboration
 You're welcome to write features and report issues for this project.
-It's still a learning project for me, so I can't confirm that all PRs will be merged, but this project is open to contributions. 
