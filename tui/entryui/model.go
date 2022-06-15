@@ -1,8 +1,6 @@
 package entryui
 
 import (
-	"log"
-
 	"github.com/bashbunni/project-management/entry"
 	"github.com/bashbunni/project-management/tui/constants"
 	"github.com/charmbracelet/bubbles/key"
@@ -19,7 +17,7 @@ var cmd tea.Cmd
 // BackMsg change state back to project view
 type BackMsg bool
 
-// Model entryui model
+// Model implements tea.Model
 type Model struct {
 	viewport        viewport.Model
 	er              *entry.GormRepository
@@ -35,18 +33,16 @@ func (m Model) Init() tea.Cmd {
 }
 
 func calculateHeight(height int) int {
-	return height - height/4
+	return height - height/7
 }
 
 // New initialize the entryui model for your program
 func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program, windowSize tea.WindowSizeMsg) *Model {
 	m := Model{er: er, activeProjectID: activeProjectID, windowSize: windowSize}
 	m.p = p
-	vp := viewport.New(windowSize.Width, calculateHeight(windowSize.Height))
-	log.Printf("width of screen: %d", windowSize.Width)
-	m.viewport = vp
+	m.viewport = viewport.New(200, calculateHeight(windowSize.Height))
 	m.viewport.Style = lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
+		BorderStyle(lipgloss.DoubleBorder()).
 		BorderForeground(lipgloss.Color("62")).
 		Align(lipgloss.Bottom)
 	m.setViewportContent()
@@ -70,7 +66,6 @@ func (m *Model) setViewportContent() {
 
 // Update handle IO and commands
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// TODO: fix viewport sizing with keypresses and on init
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.viewport.Width = msg.Width
