@@ -10,10 +10,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// TODO: move from ioutil to os/io -> e.g. os.CreateTemp
-
 var cmd tea.Cmd
 
+// TODO: clean up your project PLEASE
 // BackMsg change state back to project view
 type BackMsg bool
 
@@ -24,6 +23,7 @@ type Model struct {
 	activeProjectID uint
 	p               *tea.Program
 	error           string
+	alerts          string
 	windowSize      tea.WindowSizeMsg
 }
 
@@ -32,15 +32,11 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
-func calculateHeight(height int) int {
-	return height - height/7
-}
-
 // New initialize the entryui model for your program
 func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program, windowSize tea.WindowSizeMsg) *Model {
 	m := Model{er: er, activeProjectID: activeProjectID, windowSize: windowSize}
 	m.p = p
-	m.viewport = viewport.New(200, calculateHeight(windowSize.Height))
+	m.viewport = viewport.New(windowSize.Width, calculateHeight(windowSize.Height))
 	m.viewport.Style = lipgloss.NewStyle().
 		BorderStyle(lipgloss.DoubleBorder()).
 		BorderForeground(lipgloss.Color("62")).
@@ -112,10 +108,16 @@ func (m Model) View() string {
 	return constants.DocStyle.Render(formatted)
 }
 
+/* helpers */
+
 func getEntryMessagesByProjectIDAsSingleString(id uint, er *entry.GormRepository) (string, error) {
 	entries, err := er.GetEntriesByProjectID(id)
 	if err != nil {
 		return "", err
 	}
 	return string(entry.FormattedOutputFromEntries(entries)), nil
+}
+
+func calculateHeight(height int) int {
+	return height - height/7
 }
