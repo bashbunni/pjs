@@ -29,23 +29,24 @@ type MainModel struct {
 	pr              *project.GormRepository
 	er              *entry.GormRepository
 	activeProjectID uint
+	windowSize      tea.WindowSizeMsg
 }
 
 // StartTea the entry point for the UI. Initializes the model.
 func StartTea(pr project.GormRepository, er entry.GormRepository) {
-	if os.Getenv("HELP_DEBUG") != "" {
-		if f, err := tea.LogToFile("debug.log", "help"); err != nil {
-			fmt.Println("Couldn't open a file for logging:", err)
-			os.Exit(1)
-		} else {
-			defer func() {
-				err = f.Close()
-				if err != nil {
-					log.Fatal(err)
-				}
-			}()
-		}
+	// if os.Getenv("HELP_DEBUG") != "" {
+	if f, err := tea.LogToFile("debug.log", "help"); err != nil {
+		fmt.Println("Couldn't open a file for logging:", err)
+		os.Exit(1)
+	} else {
+		defer func() {
+			err = f.Close()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}()
 	}
+	// }
 
 	m := New(&pr, &er)
 	p = tea.NewProgram(m)
@@ -76,6 +77,8 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.windowSize = msg // pass this along to the entry view so it uses the full window size when it's initialized
 	case entryui.BackMsg:
 		m.state = projectView
 	case projectui.SelectMsg:
@@ -93,7 +96,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.project = projectModel
 		cmd = newCmd
 	case entryView:
-		m.entry = entryui.New(m.er, m.activeProjectID, p)
+		m.entry = entryui.New(m.er, m.activeProjectID, p, m.windowSize)
 		newEntry, newCmd := m.entry.Update(msg)
 		entryModel, ok := newEntry.(entryui.Model)
 		if !ok {

@@ -1,6 +1,8 @@
 package entryui
 
 import (
+	"log"
+
 	"github.com/bashbunni/project-management/entry"
 	"github.com/bashbunni/project-management/tui/constants"
 	"github.com/charmbracelet/bubbles/key"
@@ -24,6 +26,7 @@ type Model struct {
 	activeProjectID uint
 	p               *tea.Program
 	error           string
+	windowSize      tea.WindowSizeMsg
 }
 
 // Init run any intial IO on program start
@@ -31,16 +34,21 @@ func (m Model) Init() tea.Cmd {
 	return nil
 }
 
+func calculateHeight(height int) int {
+	return height - height/4
+}
+
 // New initialize the entryui model for your program
-func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *Model {
-	m := Model{er: er, activeProjectID: activeProjectID}
+func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program, windowSize tea.WindowSizeMsg) *Model {
+	m := Model{er: er, activeProjectID: activeProjectID, windowSize: windowSize}
 	m.p = p
-	vp := viewport.New(78, 28)
+	vp := viewport.New(windowSize.Width, calculateHeight(windowSize.Height))
+	log.Printf("width of screen: %d", windowSize.Width)
 	m.viewport = vp
 	m.viewport.Style = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62")).
-		PaddingRight(2)
+		Align(lipgloss.Bottom)
 	m.setViewportContent()
 	return &m
 }
@@ -65,9 +73,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// TODO: fix viewport sizing with keypresses and on init
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.viewport.Width = msg.Width - 1
-		m.viewport.Height = msg.Height - 4
-		return m, nil
+		m.viewport.Width = msg.Width
+		m.viewport.Height = calculateHeight(msg.Height)
 	case errMsg:
 		m.error = msg.Error()
 	case editorFinishedMsg:
