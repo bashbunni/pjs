@@ -125,6 +125,6 @@ func NewProjectPrompt() string {
 	fmt.Println("what would you like to name your project?")
 	scanner := bufio.NewScanner(os.Stdin)
 	scanner.Scan()
-	name = scanner.Text();
+	name = scanner.Text()
 	return name
 }
