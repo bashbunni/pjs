@@ -10,20 +10,21 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// TODO: move from ioutil to os/io -> e.g. os.CreateTemp
-
 var cmd tea.Cmd
 
+// TODO: clean up your project PLEASE
 // BackMsg change state back to project view
 type BackMsg bool
 
-// Model entryui model
+// Model implements tea.Model
 type Model struct {
 	viewport        viewport.Model
 	er              *entry.GormRepository
 	activeProjectID uint
 	p               *tea.Program
 	error           string
+	alerts          string
+	windowSize      tea.WindowSizeMsg
 }
 
 // Init run any intial IO on program start
@@ -32,15 +33,14 @@ func (m Model) Init() tea.Cmd {
 }
 
 // New initialize the entryui model for your program
-func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *Model {
-	m := Model{er: er, activeProjectID: activeProjectID}
+func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program, windowSize tea.WindowSizeMsg) *Model {
+	m := Model{er: er, activeProjectID: activeProjectID, windowSize: windowSize}
 	m.p = p
-	vp := viewport.New(78, 28)
-	m.viewport = vp
+	m.viewport = viewport.New(windowSize.Width, calculateHeight(windowSize.Height))
 	m.viewport.Style = lipgloss.NewStyle().
-		BorderStyle(lipgloss.RoundedBorder()).
+		BorderStyle(lipgloss.DoubleBorder()).
 		BorderForeground(lipgloss.Color("62")).
-		PaddingRight(2)
+		Align(lipgloss.Bottom)
 	m.setViewportContent()
 	return &m
 }
@@ -62,12 +62,10 @@ func (m *Model) setViewportContent() {
 
 // Update handle IO and commands
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// TODO: fix viewport sizing with keypresses and on init
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.viewport.Width = msg.Width - 1
-		m.viewport.Height = msg.Height - 4
-		return m, nil
+		m.viewport.Width = msg.Width
+		m.viewport.Height = calculateHeight(msg.Height)
 	case errMsg:
 		m.error = msg.Error()
 	case editorFinishedMsg:
@@ -110,10 +108,16 @@ func (m Model) View() string {
 	return constants.DocStyle.Render(formatted)
 }
 
+/* helpers */
+
 func getEntryMessagesByProjectIDAsSingleString(id uint, er *entry.GormRepository) (string, error) {
 	entries, err := er.GetEntriesByProjectID(id)
 	if err != nil {
 		return "", err
 	}
 	return string(entry.FormattedOutputFromEntries(entries)), nil
+}
+
+func calculateHeight(height int) int {
+	return height - height/7
 }

@@ -14,14 +14,14 @@ const divider = "---"
 func FormattedOutputFromEntries(Entries []Entry) []byte {
 	var output string
 	for i := len(Entries) - 1; i >= 0; i-- {
-		output += fmt.Sprintf("ID: %d\nCreated: %s\nMessage:\n %s\n %s\n", Entries[i].ID, Entries[i].CreatedAt.Format("2006-01-02"), Entries[i].Message, divider)
+		output += fmt.Sprintf("ID: %d\nCreated: %s\nMessage:\n\n %s\n %s\n", Entries[i].ID, Entries[i].CreatedAt.Format("2006-01-02"), Entries[i].Message, divider)
 	}
 	return []byte(output)
 }
 
 // OutputEntriesToMarkdown create an output file that contains the given entries in a formatted string
 func OutputEntriesToMarkdown(entries []Entry) error {
-	file, err := os.OpenFile("./output.md", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	file, err := os.OpenFile("./output.md", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 	if err != nil {
 		return errors.Wrap(err, errCannotCreateFile)
 	}
