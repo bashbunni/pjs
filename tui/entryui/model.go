@@ -1,6 +1,7 @@
 package entryui
 
 import (
+
 	"github.com/bashbunni/project-management/entry"
 	"github.com/bashbunni/project-management/tui/constants"
 	"github.com/charmbracelet/bubbles/key"
@@ -15,6 +16,7 @@ var cmd tea.Cmd
 // TODO: clean up your project PLEASE
 // BackMsg change state back to project view
 type BackMsg bool
+type PrintedMsg struct{}
 
 // Model implements tea.Model
 type Model struct {
@@ -75,6 +77,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		cmd = m.createEntryCmd(msg.file)
 	case updateEntryListMsg:
 		return m, m.updateEntriesCmd
+	case PrintedMsg:
+		m.alerts = "printed!"
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, constants.Keymap.Create):
@@ -82,6 +86,18 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, constants.Keymap.Back):
 			return m, func() tea.Msg {
 				return BackMsg(true)
+			}
+		case msg.String() == "p":
+			return m, func() tea.Msg {
+				entries, err := m.er.GetEntriesByProjectID(m.activeProjectID)
+				if err != nil {
+					return errMsg{err}
+				}
+				err = entry.OutputEntriesToPDF(entries)
+				if err != nil {
+					return errMsg{err}
+				}
+				return PrintedMsg{}
 			}
 		case msg.String() == "ctrl+c":
 			return m, tea.Quit
@@ -95,16 +111,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) helpView() string {
-	return constants.HelpStyle("\n ↑/↓: navigate  • esc: back • c: create entry • d: delete entry • q: quit\n")
+	return constants.HelpStyle("\n ↑/↓: navigate  • esc: back • c: create entry • d: delete entry • p: print • q: quit\n")
 }
 
 func (m Model) errorView() string {
 	return constants.ErrStyle(m.error)
 }
 
+func (m Model) alertView() string {
+	return constants.AlertStyle(m.alerts)
+}
+
 // View return the text UI to be output to the terminal
 func (m Model) View() string {
-	formatted := lipgloss.JoinVertical(lipgloss.Left, m.viewport.View(), m.helpView(), m.errorView())
+	formatted := lipgloss.JoinVertical(lipgloss.Left, m.viewport.View(), m.helpView(), m.errorView(), m.alertView())
 	return constants.DocStyle.Render(formatted)
 }
 
@@ -121,3 +141,14 @@ func getEntryMessagesByProjectIDAsSingleString(id uint, er *entry.GormRepository
 func calculateHeight(height int) int {
 	return height - height/7
 }
+
+// TODO: don't pipe from Stdin, break up functionality more
+/*
+Questions:
+I might be able to use the ExecCommand interface
+then SetStdOut to an io.Writer that I've created?
+
+Scratchpad
+- p.Send? - but I don't need to send it back to the program.
+I just need to suspend bubble tea so I can pipe data to pandoc. 
+*/

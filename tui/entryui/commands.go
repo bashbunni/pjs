@@ -52,3 +52,4 @@ func (m Model) createEntryCmd(file *os.File) tea.Cmd {
 		return updateEntryListMsg{input}
 	}
 }
+
