@@ -1,8 +1,6 @@
 package projectui
 
 import (
-	"log"
-
 	"github.com/bashbunni/project-management/project"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -42,7 +40,6 @@ func deleteProjectCmd(id uint, pr *project.GormRepository) tea.Cmd {
 
 func selectProjectCmd(ActiveProjectID uint) tea.Cmd {
 	return func() tea.Msg {
-		log.Println("in selectProjectCmd: ", ActiveProjectID)
 		return SelectMsg{ActiveProjectID: ActiveProjectID}
 	}
 }

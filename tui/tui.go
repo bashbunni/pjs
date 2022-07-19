@@ -34,7 +34,6 @@ type MainModel struct {
 
 // StartTea the entry point for the UI. Initializes the model.
 func StartTea(pr project.GormRepository, er entry.GormRepository) {
-	// if os.Getenv("HELP_DEBUG") != "" {
 	if f, err := tea.LogToFile("debug.log", "help"); err != nil {
 		fmt.Println("Couldn't open a file for logging:", err)
 		os.Exit(1)
@@ -46,7 +45,6 @@ func StartTea(pr project.GormRepository, er entry.GormRepository) {
 			}
 		}()
 	}
-	// }
 
 	m := New(&pr, &er)
 	p = tea.NewProgram(m)
@@ -83,6 +81,7 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.state = projectView
 	case projectui.SelectMsg:
 		m.activeProjectID = msg.ActiveProjectID
+		m.entry = entryui.New(m.er, m.activeProjectID, p, m.windowSize)
 		m.state = entryView
 	}
 
@@ -96,14 +95,12 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.project = projectModel
 		cmd = newCmd
 	case entryView:
-		m.entry = entryui.New(m.er, m.activeProjectID, p, m.windowSize)
 		newEntry, newCmd := m.entry.Update(msg)
 		entryModel, ok := newEntry.(entryui.Model)
 		if !ok {
 			panic("could not perform assertion on entryui model")
 		}
-		m.entry = entryModel
-		cmd = newCmd
+		return entryModel, newCmd
 	}
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)

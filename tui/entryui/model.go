@@ -1,9 +1,12 @@
 package entryui
 
 import (
+	"log"
+
 	"github.com/bashbunni/project-management/entry"
 	"github.com/bashbunni/project-management/tui/constants"
 	"github.com/charmbracelet/bubbles/key"
+	"github.com/charmbracelet/bubbles/paginator"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
@@ -12,7 +15,6 @@ import (
 
 var cmd tea.Cmd
 
-// TODO: clean up your project PLEASE
 // BackMsg change state back to project view
 type BackMsg bool
 
@@ -25,6 +27,8 @@ type Model struct {
 	error           string
 	alerts          string
 	windowSize      tea.WindowSizeMsg
+	paginator       paginator.Model
+	entries         []entry.Entry
 }
 
 // Init run any intial IO on program start
@@ -38,20 +42,32 @@ func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program, windowS
 	m.p = p
 	m.viewport = viewport.New(windowSize.Width, calculateHeight(windowSize.Height))
 	m.viewport.Style = lipgloss.NewStyle().
-		BorderStyle(lipgloss.DoubleBorder()).
-		BorderForeground(lipgloss.Color("62")).
 		Align(lipgloss.Bottom)
+
+	// init paginator
+	m.paginator = paginator.New()
+	m.paginator.Type = paginator.Dots
+	m.paginator.ActiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).Render("•")
+	m.paginator.InactiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("•")
+
+	// get entries
+	var err error
+	if m.entries, err = er.GetEntriesByProjectID(m.activeProjectID); err != nil {
+		log.Fatalf("failed to get entries: %v", err)
+	}
+	m.paginator.SetTotalPages(len(m.entries))
+
+	// set content
 	m.setViewportContent()
 	return &m
 }
 
 func (m *Model) setViewportContent() {
-	content, err := getEntryMessagesByProjectIDAsSingleString(m.activeProjectID, m.er)
-	if content == "" {
+	var content string
+	if len(m.entries) == 0 {
 		content = "There are no entries for this project :)"
-	}
-	if err != nil {
-		m.error = "cannot get entry messages as single string"
+	} else {
+		content = entry.FormatEntry(m.entries[m.paginator.Page])
 	}
 	str, err := glamour.Render(content, "dark")
 	if err != nil {
@@ -88,9 +104,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case msg.String() == "q":
 			return m, tea.Quit
 		default:
-			m.viewport, cmd = m.viewport.Update(msg)
+			// m.viewport, cmd = m.viewport.Update(msg)
+			// cmds = append(cmds, cmd)
 		}
 	}
+	m.paginator, cmd = m.paginator.Update(msg)
+	// TODO: bug: not going to next page despite still having lots of pages left
 	return m, cmd
 }
 
@@ -104,12 +123,14 @@ func (m Model) errorView() string {
 
 // View return the text UI to be output to the terminal
 func (m Model) View() string {
-	formatted := lipgloss.JoinVertical(lipgloss.Left, m.viewport.View(), m.helpView(), m.errorView())
+	m.setViewportContent()
+	formatted := lipgloss.JoinVertical(lipgloss.Left, m.viewport.View(), m.helpView(), m.errorView(), m.paginator.View())
 	return constants.DocStyle.Render(formatted)
 }
 
 /* helpers */
 
+// TODO: delete this
 func getEntryMessagesByProjectIDAsSingleString(id uint, er *entry.GormRepository) (string, error) {
 	entries, err := er.GetEntriesByProjectID(id)
 	if err != nil {
