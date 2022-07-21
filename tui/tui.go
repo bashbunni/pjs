@@ -100,7 +100,8 @@ func (m MainModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !ok {
 			panic("could not perform assertion on entryui model")
 		}
-		return entryModel, newCmd
+		m.entry = entryModel
+		cmd = newCmd
 	}
 	cmds = append(cmds, cmd)
 	return m, tea.Batch(cmds...)

@@ -12,8 +12,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-// TODO: add pagination
-
 // SelectMsg the message to change the view to the selected entry
 type SelectMsg struct {
 	ActiveProjectID uint

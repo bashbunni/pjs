@@ -25,7 +25,6 @@ type Model struct {
 	activeProjectID uint
 	p               *tea.Program
 	error           string
-	alerts          string
 	windowSize      tea.WindowSizeMsg
 	paginator       paginator.Model
 	entries         []entry.Entry
@@ -109,7 +108,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 	m.paginator, cmd = m.paginator.Update(msg)
-	// TODO: bug: not going to next page despite still having lots of pages left
 	return m, cmd
 }
 
@@ -124,20 +122,11 @@ func (m Model) errorView() string {
 // View return the text UI to be output to the terminal
 func (m Model) View() string {
 	m.setViewportContent()
-	formatted := lipgloss.JoinVertical(lipgloss.Left, m.viewport.View(), m.helpView(), m.errorView(), m.paginator.View())
+	formatted := lipgloss.JoinVertical(lipgloss.Left, "\n", m.viewport.View(), m.helpView(), m.errorView(), m.paginator.View())
 	return constants.DocStyle.Render(formatted)
 }
 
 /* helpers */
-
-// TODO: delete this
-func getEntryMessagesByProjectIDAsSingleString(id uint, er *entry.GormRepository) (string, error) {
-	entries, err := er.GetEntriesByProjectID(id)
-	if err != nil {
-		return "", err
-	}
-	return string(entry.FormattedOutputFromEntries(entries)), nil
-}
 
 func calculateHeight(height int) int {
 	return height - height/7
