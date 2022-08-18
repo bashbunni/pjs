@@ -123,7 +123,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.input.Focus()
 				cmd = textinput.Blink
 			case key.Matches(msg, constants.Keymap.Delete):
-				cmd = deleteProjectCmd(m.getActiveProjectID(), m.pr)
+				items := m.list.Items()
+				if len(items) > 0 {
+					cmd = deleteProjectCmd(m.getActiveProjectID(), m.pr)
+				}
 			default:
 				m.list, cmd = m.list.Update(msg)
 			}
