@@ -1,12 +1,12 @@
 package entryui
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 
 	"github.com/bashbunni/project-management/utils"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/pkg/errors"
 )
 
 const defaultEditor = "vim"
@@ -37,17 +37,17 @@ func (m Model) createEntryCmd(file *os.File) tea.Cmd {
 	return func() tea.Msg {
 		input, err := utils.ReadFile(file)
 		if err != nil {
-			return errMsg{errors.Wrap(err, "cannot read file in createEntryCmd")}
+			return errMsg{fmt.Errorf("cannot read file in createEntryCmd: %v", err)}
 			// TODO: why is this giving me an error when input != ""
 		}
 		if err := m.er.CreateEntry(input, m.activeProjectID); err != nil {
-			return errMsg{errors.Wrap(err, "cannot create entry")}
+			return errMsg{fmt.Errorf("cannot create entry: %v", err)}
 		}
 		if err := os.Remove(file.Name()); err != nil {
-			return errMsg{errors.Wrap(err, "cannot remove file")}
+			return errMsg{fmt.Errorf("cannot remove file: %v", err)}
 		}
 		if closeErr := file.Close(); closeErr != nil {
-			return errMsg{errors.New("unable to close file")}
+			return errMsg{fmt.Errorf("unable to close file: %v", err)}
 		}
 		return updateEntryListMsg{input}
 	}
