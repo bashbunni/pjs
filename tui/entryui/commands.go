@@ -28,11 +28,6 @@ func openEditorCmd() tea.Cmd {
 	})
 }
 
-func (m Model) updateEntriesCmd() tea.Msg {
-	m.setViewportContent()
-	return updatedMsg{}
-}
-
 func (m Model) createEntryCmd(file *os.File) tea.Cmd {
 	return func() tea.Msg {
 		input, err := utils.ReadFile(file)
@@ -49,6 +44,6 @@ func (m Model) createEntryCmd(file *os.File) tea.Cmd {
 		if closeErr := file.Close(); closeErr != nil {
 			return errMsg{fmt.Errorf("unable to close file: %v", err)}
 		}
-		return updateEntryListMsg{input}
+		return m.setupEntries()
 	}
 }

@@ -2,6 +2,7 @@ package entryui
 
 import (
 	"log"
+	"os"
 
 	"github.com/bashbunni/project-management/entry"
 	"github.com/bashbunni/project-management/tui/constants"
@@ -13,10 +14,19 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-var cmd tea.Cmd
+type (
+	errMsg         struct{ error } // TODO: have this implement Error()
+	UpdatedEntries []entry.Entry
+	UpdateMe       struct{}
+	BackMsg        bool
+)
 
-// BackMsg change state back to project view
-type BackMsg bool
+type editorFinishedMsg struct {
+	err  error
+	file *os.File
+}
+
+var cmd tea.Cmd
 
 // Model implements tea.Model
 type Model struct {
@@ -49,16 +59,21 @@ func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program, windowS
 	m.paginator.ActiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).Render("•")
 	m.paginator.InactiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("•")
 
-	// get entries
-	var err error
-	if m.entries, err = er.GetEntriesByProjectID(m.activeProjectID); err != nil {
-		log.Fatalf("failed to get entries: %v", err)
-	}
+	m.entries = m.setupEntries().(UpdatedEntries)
 	m.paginator.SetTotalPages(len(m.entries))
-
 	// set content
 	m.setViewportContent()
 	return &m
+}
+
+func (m *Model) setupEntries() tea.Msg {
+	var err error
+	var entries []entry.Entry
+	if entries, err = m.er.GetEntriesByProjectID(m.activeProjectID); err != nil {
+		log.Fatalf("failed to get entries: %v", err)
+	}
+	entries = entry.ReverseEntries(entries)
+	return UpdatedEntries(entries)
 }
 
 func (m *Model) setViewportContent() {
@@ -77,6 +92,7 @@ func (m *Model) setViewportContent() {
 
 // Update handle IO and commands
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.viewport.Width = msg.Width
@@ -87,9 +103,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			return m, tea.Quit
 		}
-		cmd = m.createEntryCmd(msg.file)
-	case updateEntryListMsg:
-		return m, m.updateEntriesCmd
+		cmds = append(cmds, m.createEntryCmd(msg.file))
+	case UpdatedEntries:
+		log.Println("created new entry")
+		log.Println(msg)
+		m.entries = msg
+		m.paginator.SetTotalPages(len(m.entries))
+		m.setViewportContent()
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, constants.Keymap.Create):
@@ -98,31 +118,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, func() tea.Msg {
 				return BackMsg(true)
 			}
-		case msg.String() == "ctrl+c":
+		case key.Matches(msg, constants.Keymap.Quit):
 			return m, tea.Quit
-		case msg.String() == "q":
-			return m, tea.Quit
-		default:
-			// m.viewport, cmd = m.viewport.Update(msg)
-			// cmds = append(cmds, cmd)
 		}
 	}
+
 	m.paginator, cmd = m.paginator.Update(msg)
-	return m, cmd
+	cmds = append(cmds, cmd)
+	m.setViewportContent() // refresh the content on every Update call
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) helpView() string {
+	// TODO: use the keymaps to populate the help string
 	return constants.HelpStyle("\n ↑/↓: navigate  • esc: back • c: create entry • d: delete entry • q: quit\n")
-}
-
-func (m Model) errorView() string {
-	return constants.ErrStyle(m.error)
 }
 
 // View return the text UI to be output to the terminal
 func (m Model) View() string {
-	m.setViewportContent()
-	formatted := lipgloss.JoinVertical(lipgloss.Left, "\n", m.viewport.View(), m.helpView(), m.errorView(), m.paginator.View())
+	formatted := lipgloss.JoinVertical(lipgloss.Left, "\n", m.viewport.View(), m.helpView(), constants.ErrStyle(m.error), m.paginator.View())
 	return constants.DocStyle.Render(formatted)
 }
 

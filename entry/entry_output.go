@@ -24,6 +24,14 @@ func FormatEntry(entry Entry) string {
 	return fmt.Sprintf("ID: %d\nCreated: %s\nMessage:\n\n %s\n %s\n", entry.ID, entry.CreatedAt.Format("2006-01-02"), entry.Message, divider)
 }
 
+func ReverseEntries(entries []Entry) []Entry {
+	var output []Entry
+	for i := len(entries) - 1; i > 0; i-- {
+		output = append(output, entries[i])
+	}
+	return output
+}
+
 // OutputEntriesToMarkdown create an output file that contains the given entries in a formatted string
 func OutputEntriesToMarkdown(entries []Entry) error {
 	file, err := os.OpenFile("./output.md", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
