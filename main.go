@@ -16,7 +16,7 @@ func openSqlite() *gorm.DB {
 	if err != nil {
 		log.Fatalf("unable to open database: %v", err)
 	}
-	err = db.AutoMigrate(&entry.Entry{}, &project.Project{})
+	err = db.AutoMigrate(&entry.Model{}, &project.Project{})
 	if err != nil {
 		log.Fatal(err)
 	}

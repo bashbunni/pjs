@@ -1,15 +1,22 @@
-package projectui
+package tui
 
 import (
 	"log"
 
-	"github.com/bashbunni/project-management/entry"
 	"github.com/bashbunni/project-management/project"
 	"github.com/bashbunni/project-management/tui/constants"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+)
+
+// TODO: fix GormRepository vs Repository
+// TODO: should I still be doing dependency injection for the functions or just refer to the global value?
+// I think it's less memory to use the global... Does it affect testing?
+type (
+	updateProjectListMsg struct{}
+	renameProjectMsg     []list.Item
 )
 
 // SelectMsg the message to change the view to the selected entry
@@ -30,19 +37,18 @@ type Model struct {
 	mode  mode
 	list  list.Model
 	input textinput.Model
-	pr    *project.GormRepository
 }
 
-// New initialize the projectui model for your program
-func New(pr *project.GormRepository, er *entry.GormRepository) tea.Model {
+// InitProject initialize the projectui model for your program
+func InitProject() tea.Model {
 	input := textinput.New()
 	input.Prompt = "$ "
 	input.Placeholder = "Project name..."
 	input.CharLimit = 250
 	input.Width = 50
 
-	items := newProjectList(pr)
-	m := Model{mode: nav, list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), input: input, pr: pr}
+	items := newProjectList(constants.Pr)
+	m := Model{mode: nav, list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), input: input}
 	m.list.Title = "projects"
 	m.list.AdditionalShortHelpKeys = func() []key.Binding {
 		return []key.Binding{
@@ -74,10 +80,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
+		constants.WindowSize = msg
 		top, right, bottom, left := constants.DocStyle.GetMargin()
 		m.list.SetSize(msg.Width-left-right, msg.Height-top-bottom-1)
 	case updateProjectListMsg:
-		projects, err := m.pr.GetAllProjects()
+		projects, err := constants.Pr.GetAllProjects()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -91,10 +98,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.input.Focused() {
 			if key.Matches(msg, constants.Keymap.Enter) {
 				if m.mode == create {
-					cmds = append(cmds, createProjectCmd(m.input.Value(), m.pr))
+					cmds = append(cmds, createProjectCmd(m.input.Value(), constants.Pr))
 				}
 				if m.mode == edit {
-					cmds = append(cmds, renameProjectCmd(m.getActiveProjectID(), m.pr, m.input.Value()))
+					cmds = append(cmds, renameProjectCmd(m.getActiveProjectID(), constants.Pr, m.input.Value()))
 				}
 				m.input.SetValue("")
 				m.mode = nav
@@ -117,7 +124,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case msg.String() == "ctrl+c":
 				return m, tea.Quit
 			case key.Matches(msg, constants.Keymap.Enter):
-				cmd = selectProjectCmd(m.getActiveProjectID())
+				activeProject := m.list.SelectedItem().(project.Project)
+				return InitEntry(constants.Er, activeProject.ID, constants.P, constants.WindowSize), func() tea.Msg { return constants.WindowSize }
+				// TODO: this command isn't necessary, do the things here
 			case key.Matches(msg, constants.Keymap.Rename):
 				m.mode = edit
 				m.input.Focus()
@@ -125,7 +134,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, constants.Keymap.Delete):
 				items := m.list.Items()
 				if len(items) > 0 {
-					cmd = deleteProjectCmd(m.getActiveProjectID(), m.pr)
+					cmd = deleteProjectCmd(m.getActiveProjectID(), constants.Pr)
 				}
 			default:
 				m.list, cmd = m.list.Update(msg)

@@ -1,12 +1,11 @@
 package entry
 
 import (
-	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
-// Entry the entry model
-type Entry struct {
+// Model the entry model
+type Model struct {
 	gorm.Model
 	ProjectID uint `gorm:"foreignKey:Project"`
 	Message   string
@@ -16,7 +15,7 @@ type Entry struct {
 type Repository interface {
 	DeleteEntryByID(entryID uint) error
 	DeleteEntries(projectID uint) error
-	GetEntriesByProjectID(projectID uint) ([]Entry, error)
+	GetEntriesByProjectID(projectID uint) ([]Model, error)
 	CreateEntry(message []byte, projectID uint) error
 }
 
@@ -27,30 +26,27 @@ type GormRepository struct {
 
 // DeleteEntryByID delete an entry by its ID
 func (g *GormRepository) DeleteEntryByID(entryID uint) error {
-	result := g.DB.Delete(&Entry{}, entryID)
-	resultErr := result.Error
-	if resultErr != nil {
-		return errors.Wrap(resultErr, cannotDeleteEntry)
-	}
-	return nil
+	result := g.DB.Delete(&Model{}, entryID)
+	return result.Error
 }
 
+// TODO: unused
 // DeleteEntries delete all entries for a given project
 func (g *GormRepository) DeleteEntries(projectID uint) error {
-	result := g.DB.Where("project_id = ?", projectID).Delete(&Entry{})
-	return errors.Wrap(result.Error, cannotDeleteEntry)
+	result := g.DB.Where("project_id = ?", projectID).Delete(&Model{})
+	return result.Error
 }
 
 // GetEntriesByProjectID get all entries for a given project
-func (g *GormRepository) GetEntriesByProjectID(projectID uint) ([]Entry, error) {
-	var Entries []Entry
+func (g *GormRepository) GetEntriesByProjectID(projectID uint) ([]Model, error) {
+	var Entries []Model
 	result := g.DB.Where("project_id = ?", projectID).Find(&Entries)
-	return Entries, errors.Wrap(result.Error, cannotFindProject)
+	return Entries, result.Error
 }
 
 // CreateEntry create a new entry in the database
 func (g *GormRepository) CreateEntry(message []byte, projectID uint) error {
-	entry := Entry{Message: string(message[:]), ProjectID: projectID}
+	entry := Model{Message: string(message[:]), ProjectID: projectID}
 	result := g.DB.Create(&entry)
-	return errors.Wrap(result.Error, cannotCreateEntry)
+	return result.Error
 }

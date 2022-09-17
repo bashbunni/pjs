@@ -14,9 +14,9 @@ func Setup(t *testing.T) *gorm.DB {
 	if err != nil {
 		log.Fatalf("unable to open in-memory SQLite DB: %v", err)
 	}
-	db.AutoMigrate(&Entry{})
+	db.AutoMigrate(&Model{})
 	t.Cleanup(func() {
-		db.Migrator().DropTable(&Entry{})
+		db.Migrator().DropTable(&Model{})
 	})
 	return db
 }
@@ -27,7 +27,7 @@ func TestDeleteEntryForEmptyDB(t *testing.T) {
 	er := GormRepository{DB: db}
 
 	er.DeleteEntryByID(1)
-	if err := db.Unscoped().Where("ID = 1").First(&Entry{}).Error; err == nil {
+	if err := db.Unscoped().Where("ID = 1").First(&Model{}).Error; err == nil {
 		t.Error("expected error")
 	}
 }
@@ -40,7 +40,7 @@ func TestDeleteEntryWithTwoEntries(t *testing.T) {
 	er.CreateEntry([]byte("I am just a world"), 1)
 
 	er.DeleteEntryByID(1)
-	if err := db.Unscoped().Where("ID = 1").First(&Entry{}).Error; err != nil {
+	if err := db.Unscoped().Where("ID = 1").First(&Model{}).Error; err != nil {
 		t.Error("expected no error")
 	}
 }
@@ -51,7 +51,7 @@ func TestDeleteEntriesForEmptyDB(t *testing.T) {
 	er := GormRepository{DB: db}
 
 	er.DeleteEntries(1)
-	if err := db.Unscoped().Where("ID = 1").First(&Entry{}).Error; err == nil {
+	if err := db.Unscoped().Where("ID = 1").First(&Model{}).Error; err == nil {
 		t.Error("expected error")
 	}
 }
@@ -64,7 +64,7 @@ func TestDeleteEntriesWithTwoEntries(t *testing.T) {
 	er.CreateEntry([]byte("I am just a world"), 1)
 
 	er.DeleteEntries(1)
-	if err := db.Unscoped().Where("ID = 1").First(&Entry{}).Error; err != nil {
+	if err := db.Unscoped().Where("ID = 1").First(&Model{}).Error; err != nil {
 		t.Error("expected no error")
 	}
 }

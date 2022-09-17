@@ -1,6 +1,7 @@
-package entryui
+package tui
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -15,8 +16,8 @@ import (
 )
 
 type (
-	errMsg         struct{ error } // TODO: have this implement Error()
-	UpdatedEntries []entry.Entry
+	errMsg         struct{ error }
+	UpdatedEntries []entry.Model
 	UpdateMe       struct{}
 	BackMsg        bool
 )
@@ -28,27 +29,24 @@ type editorFinishedMsg struct {
 
 var cmd tea.Cmd
 
-// Model implements tea.Model
-type Model struct {
+// Entry implements tea.Model
+type Entry struct {
 	viewport        viewport.Model
-	er              *entry.GormRepository
 	activeProjectID uint
-	p               *tea.Program
 	error           string
 	windowSize      tea.WindowSizeMsg
 	paginator       paginator.Model
-	entries         []entry.Entry
+	entries         []entry.Model
 }
 
 // Init run any intial IO on program start
-func (m Model) Init() tea.Cmd {
+func (m Entry) Init() tea.Cmd {
 	return nil
 }
 
-// New initialize the entryui model for your program
-func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program, windowSize tea.WindowSizeMsg) *Model {
-	m := Model{er: er, activeProjectID: activeProjectID, windowSize: windowSize}
-	m.p = p
+// InitEntry initialize the entryui model for your program
+func InitEntry(er *entry.GormRepository, activeProjectID uint, p *tea.Program, windowSize tea.WindowSizeMsg) *Entry {
+	m := Entry{activeProjectID: activeProjectID, windowSize: windowSize}
 	m.viewport = viewport.New(windowSize.Width, calculateHeight(windowSize.Height))
 	m.viewport.Style = lipgloss.NewStyle().
 		Align(lipgloss.Bottom)
@@ -66,17 +64,17 @@ func New(er *entry.GormRepository, activeProjectID uint, p *tea.Program, windowS
 	return &m
 }
 
-func (m *Model) setupEntries() tea.Msg {
+func (m *Entry) setupEntries() tea.Msg {
 	var err error
-	var entries []entry.Entry
-	if entries, err = m.er.GetEntriesByProjectID(m.activeProjectID); err != nil {
-		log.Fatalf("failed to get entries: %v", err)
+	var entries []entry.Model
+	if entries, err = constants.Er.GetEntriesByProjectID(m.activeProjectID); err != nil {
+		return errMsg{fmt.Errorf("Cannot find project: %v", err)}
 	}
-	entries = entry.ReverseEntries(entries)
+	entries = entry.ReverseList(entries)
 	return UpdatedEntries(entries)
 }
 
-func (m *Model) setViewportContent() {
+func (m *Entry) setViewportContent() {
 	var content string
 	if len(m.entries) == 0 {
 		content = "There are no entries for this project :)"
@@ -91,9 +89,11 @@ func (m *Model) setViewportContent() {
 }
 
 // Update handle IO and commands
-func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
+	case BackMsg:
+		return InitProject(), nil
 	case tea.WindowSizeMsg:
 		m.viewport.Width = msg.Width
 		m.viewport.Height = calculateHeight(msg.Height)
@@ -129,13 +129,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m Model) helpView() string {
+func (m Entry) helpView() string {
 	// TODO: use the keymaps to populate the help string
 	return constants.HelpStyle("\n ↑/↓: navigate  • esc: back • c: create entry • d: delete entry • q: quit\n")
 }
 
 // View return the text UI to be output to the terminal
-func (m Model) View() string {
+func (m Entry) View() string {
 	formatted := lipgloss.JoinVertical(lipgloss.Left, "\n", m.viewport.View(), m.helpView(), constants.ErrStyle(m.error), m.paginator.View())
 	return constants.DocStyle.Render(formatted)
 }
