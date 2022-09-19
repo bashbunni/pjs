@@ -48,7 +48,11 @@ func InitProject() tea.Model {
 	input.Width = 50
 
 	items := newProjectList(constants.Pr)
-	m := Model{mode: nav, list: list.NewModel(items, list.NewDefaultDelegate(), 0, 0), input: input}
+	m := Model{mode: nav, list: list.NewModel(items, list.NewDefaultDelegate(), 8, 8), input: input}
+	if constants.WindowSize.Height != 0 {
+		top, right, bottom, left := constants.DocStyle.GetMargin()
+		m.list.SetSize(constants.WindowSize.Width-left-right, constants.WindowSize.Height-top-bottom-1)
+	}
 	m.list.Title = "projects"
 	m.list.AdditionalShortHelpKeys = func() []key.Binding {
 		return []key.Binding{
@@ -125,8 +129,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			case key.Matches(msg, constants.Keymap.Enter):
 				activeProject := m.list.SelectedItem().(project.Project)
-				return InitEntry(constants.Er, activeProject.ID, constants.P, constants.WindowSize), func() tea.Msg { return constants.WindowSize }
-				// TODO: this command isn't necessary, do the things here
+				entry := InitEntry(constants.Er, activeProject.ID, constants.P)
+				return entry.Update(constants.WindowSize)
 			case key.Matches(msg, constants.Keymap.Rename):
 				m.mode = edit
 				m.input.Focus()

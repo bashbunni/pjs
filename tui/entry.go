@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/bashbunni/project-management/entry"
@@ -45,11 +44,11 @@ func (m Entry) Init() tea.Cmd {
 }
 
 // InitEntry initialize the entryui model for your program
-func InitEntry(er *entry.GormRepository, activeProjectID uint, p *tea.Program, windowSize tea.WindowSizeMsg) *Entry {
-	m := Entry{activeProjectID: activeProjectID, windowSize: windowSize}
-	m.viewport = viewport.New(windowSize.Width, calculateHeight(windowSize.Height))
-	m.viewport.Style = lipgloss.NewStyle().
-		Align(lipgloss.Bottom)
+func InitEntry(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *Entry {
+	m := Entry{activeProjectID: activeProjectID}
+	top, right, bottom, left := constants.DocStyle.GetMargin()
+	m.viewport = viewport.New(constants.WindowSize.Width-left-right, constants.WindowSize.Height-top-bottom-1)
+	m.viewport.Style = lipgloss.NewStyle().Align(lipgloss.Bottom)
 
 	// init paginator
 	m.paginator = paginator.New()
@@ -95,8 +94,8 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case BackMsg:
 		return InitProject(), nil
 	case tea.WindowSizeMsg:
-		m.viewport.Width = msg.Width
-		m.viewport.Height = calculateHeight(msg.Height)
+		top, right, bottom, left := constants.DocStyle.GetMargin()
+		m.viewport = viewport.New(constants.WindowSize.Width-left-right, constants.WindowSize.Height-top-bottom-6)
 	case errMsg:
 		m.error = msg.Error()
 	case editorFinishedMsg:
@@ -105,8 +104,6 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		cmds = append(cmds, m.createEntryCmd(msg.file))
 	case UpdatedEntries:
-		log.Println("created new entry")
-		log.Println(msg)
 		m.entries = msg
 		m.paginator.SetTotalPages(len(m.entries))
 		m.setViewportContent()
@@ -138,10 +135,4 @@ func (m Entry) helpView() string {
 func (m Entry) View() string {
 	formatted := lipgloss.JoinVertical(lipgloss.Left, "\n", m.viewport.View(), m.helpView(), constants.ErrStyle(m.error), m.paginator.View())
 	return constants.DocStyle.Render(formatted)
-}
-
-/* helpers */
-
-func calculateHeight(height int) int {
-	return height - height/7
 }
