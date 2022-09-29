@@ -16,7 +16,7 @@ import (
 
 type (
 	errMsg         struct{ error }
-	UpdatedEntries []entry.Model
+	UpdatedEntries []entry.Entry
 	UpdateMe       struct{}
 	BackMsg        bool
 )
@@ -33,9 +33,8 @@ type Entry struct {
 	viewport        viewport.Model
 	activeProjectID uint
 	error           string
-	windowSize      tea.WindowSizeMsg
 	paginator       paginator.Model
-	entries         []entry.Model
+	entries         []entry.Entry
 }
 
 // Init run any intial IO on program start
@@ -65,7 +64,7 @@ func InitEntry(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *
 
 func (m *Entry) setupEntries() tea.Msg {
 	var err error
-	var entries []entry.Model
+	var entries []entry.Entry
 	if entries, err = constants.Er.GetEntriesByProjectID(m.activeProjectID); err != nil {
 		return errMsg{fmt.Errorf("Cannot find project: %v", err)}
 	}

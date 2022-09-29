@@ -55,7 +55,6 @@ type GormRepository struct {
 // GetProjectByID get a project by ID
 func (g *GormRepository) GetProjectByID(projectID uint) (Project, error) {
 	var project Project
-	log.Printf("project id: %d", projectID)
 	if err := g.DB.Where("id = ?", projectID).First(&project).Error; err != nil {
 		return project, fmt.Errorf("Cannot find project: %v", err)
 	}

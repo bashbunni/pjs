@@ -4,8 +4,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// Model the entry model
-type Model struct {
+// Entry the entry model
+type Entry struct {
 	gorm.Model
 	ProjectID uint `gorm:"foreignKey:Project"`
 	Message   string
@@ -15,7 +15,7 @@ type Model struct {
 type Repository interface {
 	DeleteEntryByID(entryID uint) error
 	DeleteEntries(projectID uint) error
-	GetEntriesByProjectID(projectID uint) ([]Model, error)
+	GetEntriesByProjectID(projectID uint) ([]Entry, error)
 	CreateEntry(message []byte, projectID uint) error
 }
 
@@ -26,27 +26,27 @@ type GormRepository struct {
 
 // DeleteEntryByID delete an entry by its ID
 func (g *GormRepository) DeleteEntryByID(entryID uint) error {
-	result := g.DB.Delete(&Model{}, entryID)
+	result := g.DB.Delete(&Entry{}, entryID)
 	return result.Error
 }
 
 // TODO: unused
 // DeleteEntries delete all entries for a given project
 func (g *GormRepository) DeleteEntries(projectID uint) error {
-	result := g.DB.Where("project_id = ?", projectID).Delete(&Model{})
+	result := g.DB.Where("project_id = ?", projectID).Delete(&Entry{})
 	return result.Error
 }
 
 // GetEntriesByProjectID get all entries for a given project
-func (g *GormRepository) GetEntriesByProjectID(projectID uint) ([]Model, error) {
-	var Entries []Model
+func (g *GormRepository) GetEntriesByProjectID(projectID uint) ([]Entry, error) {
+	var Entries []Entry
 	result := g.DB.Where("project_id = ?", projectID).Find(&Entries)
 	return Entries, result.Error
 }
 
 // CreateEntry create a new entry in the database
 func (g *GormRepository) CreateEntry(message []byte, projectID uint) error {
-	entry := Model{Message: string(message[:]), ProjectID: projectID}
+	entry := Entry{Message: string(message[:]), ProjectID: projectID}
 	result := g.DB.Create(&entry)
 	return result.Error
 }
