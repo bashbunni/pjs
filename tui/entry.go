@@ -15,10 +15,9 @@ import (
 )
 
 type (
-	errMsg         struct{ error }
+	errMsg struct{ error }
+	// UpdatedEntries holds the new entries from DB
 	UpdatedEntries []entry.Entry
-	UpdateMe       struct{}
-	BackMsg        bool
 )
 
 type editorFinishedMsg struct {
@@ -90,8 +89,6 @@ func (m *Entry) setViewportContent() {
 func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 	switch msg := msg.(type) {
-	case BackMsg:
-		return InitProject(), nil
 	case tea.WindowSizeMsg:
 		top, right, bottom, left := constants.DocStyle.GetMargin()
 		m.viewport = viewport.New(constants.WindowSize.Width-left-right, constants.WindowSize.Height-top-bottom-6)
@@ -111,14 +108,13 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, constants.Keymap.Create):
 			return m, openEditorCmd()
 		case key.Matches(msg, constants.Keymap.Back):
-			return m, func() tea.Msg {
-				return BackMsg(true)
-			}
+			return InitProject(), nil
 		case key.Matches(msg, constants.Keymap.Quit):
 			return m, tea.Quit
 		}
 	}
 
+	m.viewport, cmd = m.viewport.Update(msg)
 	m.paginator, cmd = m.paginator.Update(msg)
 	cmds = append(cmds, cmd)
 	m.setViewportContent() // refresh the content on every Update call
