@@ -34,6 +34,7 @@ type Entry struct {
 	error           string
 	paginator       paginator.Model
 	entries         []entry.Entry
+	quitting        bool
 }
 
 // Init run any intial IO on program start
@@ -110,6 +111,7 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, constants.Keymap.Back):
 			return InitProject(), nil
 		case key.Matches(msg, constants.Keymap.Quit):
+			m.quitting = true
 			return m, tea.Quit
 		}
 	}
@@ -123,6 +125,9 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Entry) helpView() string {
 	// TODO: use the keymaps to populate the help string
+	if m.quitting {
+		return ""
+	}
 	return constants.HelpStyle("\n ↑/↓: navigate  • esc: back • c: create entry • d: delete entry • q: quit\n")
 }
 

@@ -34,9 +34,10 @@ const (
 
 // Model the entryui model definition
 type Model struct {
-	mode  mode
-	list  list.Model
-	input textinput.Model
+	mode     mode
+	list     list.Model
+	input    textinput.Model
+	quitting bool
 }
 
 // InitProject initialize the projectui model for your program
@@ -125,7 +126,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.mode = create
 				m.input.Focus()
 				cmd = textinput.Blink
-			case msg.String() == "ctrl+c":
+			case key.Matches(msg, constants.Keymap.Quit):
+				m.quitting = true
 				return m, tea.Quit
 			case key.Matches(msg, constants.Keymap.Enter):
 				activeProject := m.list.SelectedItem().(project.Project)
@@ -151,6 +153,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View return the text UI to be output to the terminal
 func (m Model) View() string {
+	if m.quitting {
+		return ""
+	}
 	if m.input.Focused() {
 		return constants.DocStyle.Render(m.list.View() + "\n" + m.input.View())
 	}
