@@ -85,9 +85,3 @@ func deleteProjectCmd(id uint, pr *project.GormRepository) tea.Cmd {
 		return updateProjectListMsg{}
 	}
 }
-
-func selectProjectCmd(ActiveProjectID uint) tea.Cmd {
-	return func() tea.Msg {
-		return SelectMsg{ActiveProjectID: ActiveProjectID}
-	}
-}
