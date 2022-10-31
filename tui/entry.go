@@ -96,6 +96,7 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case errMsg:
 		m.error = msg.Error()
 	case editorFinishedMsg:
+		m.quitting = false
 		if msg.err != nil {
 			return m, tea.Quit
 		}
@@ -107,6 +108,8 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, constants.Keymap.Create):
+			// TODO: remove m.quitting after bug in Bubble Tea (#431) is fixed
+			m.quitting = true
 			return m, openEditorCmd()
 		case key.Matches(msg, constants.Keymap.Back):
 			return InitProject(), nil
@@ -125,14 +128,15 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m Entry) helpView() string {
 	// TODO: use the keymaps to populate the help string
-	if m.quitting {
-		return ""
-	}
 	return constants.HelpStyle("\n ↑/↓: navigate  • esc: back • c: create entry • d: delete entry • q: quit\n")
 }
 
 // View return the text UI to be output to the terminal
 func (m Entry) View() string {
+	if m.quitting {
+		return ""
+	}
+
 	formatted := lipgloss.JoinVertical(lipgloss.Left, "\n", m.viewport.View(), m.helpView(), constants.ErrStyle(m.error), m.paginator.View())
 	return constants.DocStyle.Render(formatted)
 }

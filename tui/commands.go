@@ -37,7 +37,6 @@ func (m Entry) createEntryCmd(file *os.File) tea.Cmd {
 		input, err := utils.ReadFile(file)
 		if err != nil {
 			return errMsg{fmt.Errorf("cannot read file in createEntryCmd: %v", err)}
-			// TODO: why is this giving me an error when input != ""
 		}
 		if err := constants.Er.CreateEntry(input, m.activeProjectID); err != nil {
 			return errMsg{fmt.Errorf("cannot create entry: %v", err)}

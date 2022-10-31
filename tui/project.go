@@ -12,8 +12,6 @@ import (
 )
 
 // TODO: fix GormRepository vs Repository
-// TODO: should I still be doing dependency injection for the functions or just refer to the global value?
-// I think it's less memory to use the global... Does it affect testing?
 type (
 	updateProjectListMsg struct{}
 	renameProjectMsg     []list.Item

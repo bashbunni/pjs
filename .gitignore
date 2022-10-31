@@ -4,3 +4,5 @@ bin/
 *.md
 *.pdf
 debug.log
+
+dist/
