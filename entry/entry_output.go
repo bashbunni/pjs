@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-
-	"github.com/pkg/errors"
 )
 
 const divider = "---"
@@ -24,10 +22,11 @@ func FormatEntry(entry Entry) string {
 	return fmt.Sprintf("ID: %d\nCreated: %s\nMessage:\n\n %s\n %s\n", entry.ID, entry.CreatedAt.Format("2006-01-02"), entry.Message, divider)
 }
 
-func ReverseEntries(entries []Entry) []Entry {
+// ReverseList reverse the provided list
+func ReverseList(list []Entry) []Entry {
 	var output []Entry
-	for i := len(entries) - 1; i > 0; i-- {
-		output = append(output, entries[i])
+	for i := len(list) - 1; i >= 0; i-- {
+		output = append(output, list[i])
 	}
 	return output
 }
@@ -36,7 +35,7 @@ func ReverseEntries(entries []Entry) []Entry {
 func OutputEntriesToMarkdown(entries []Entry) error {
 	file, err := os.OpenFile("./output.md", os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o644)
 	if err != nil {
-		return errors.Wrap(err, errCannotCreateFile)
+		return fmt.Errorf("Cannot create file: %v", err)
 	}
 	defer func() {
 		err = file.Close() // want defer as close to acquisition of resources as possible
@@ -44,7 +43,7 @@ func OutputEntriesToMarkdown(entries []Entry) error {
 	output := FormattedOutputFromEntries(entries)
 	_, err = file.Write(output)
 	if err != nil {
-		return errors.Wrap(err, errCannotSaveFile)
+		return fmt.Errorf("Cannot save file: %v", err)
 	}
 	return err
 }
@@ -55,7 +54,7 @@ func OutputEntriesToPDF(entries []Entry) error {
 	pandoc := exec.Command("pandoc", "-s", "-o", "output.pdf") // c is going to run pandoc, so I'm assigning the pipe to c
 	wc, wcerr := pandoc.StdinPipe()                            // io.WriteCloser, err
 	if wcerr != nil {
-		return errors.Wrap(wcerr, errPandoc)
+		return fmt.Errorf("Cannot stdin to pandoc: %v", wcerr)
 	}
 	goerr := make(chan error)
 	done := make(chan bool)
@@ -70,11 +69,11 @@ func OutputEntriesToPDF(entries []Entry) error {
 		close(done)
 	}()
 	if err := <-goerr; err != nil {
-		return errors.Wrap(err, errCannotWriteToFilePandoc)
+		return fmt.Errorf("Cannot write file to pandoc: %v", err)
 	}
 	err := pandoc.Run()
 	if err != nil {
-		return errors.Wrap(err, errCannotRunPandoc)
+		return fmt.Errorf("Cannot run pandoc: %v", err)
 	}
 	return nil
 }

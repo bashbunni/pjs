@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
@@ -57,7 +56,7 @@ type GormRepository struct {
 func (g *GormRepository) GetProjectByID(projectID uint) (Project, error) {
 	var project Project
 	if err := g.DB.Where("id = ?", projectID).First(&project).Error; err != nil {
-		return project, errors.Wrap(err, cannotFindProject)
+		return project, fmt.Errorf("Cannot find project: %v", err)
 	}
 	return project, nil
 }
@@ -77,7 +76,7 @@ func (g *GormRepository) PrintProjects() {
 func (g *GormRepository) GetAllProjects() ([]Project, error) {
 	var projects []Project
 	if err := g.DB.Find(&projects).Error; err != nil {
-		return projects, errors.Wrap(err, emptyTable)
+		return projects, fmt.Errorf("Table is empty: %v", err)
 	}
 	return projects, nil
 }
@@ -94,7 +93,7 @@ func (g *GormRepository) HasProjects() bool {
 func (g *GormRepository) CreateProject(name string) (Project, error) {
 	proj := Project{Name: name}
 	if err := g.DB.Create(&proj).Error; err != nil {
-		return proj, errors.Wrap(err, cannotCreateProject)
+		return proj, fmt.Errorf("Cannot create project: %v", err)
 	}
 	return proj, nil
 }
@@ -102,7 +101,7 @@ func (g *GormRepository) CreateProject(name string) (Project, error) {
 // DeleteProject delete a project by ID
 func (g *GormRepository) DeleteProject(projectID uint) error {
 	if err := g.DB.Delete(&Project{}, projectID).Error; err != nil {
-		return errors.Wrap(err, cannotDeleteProject)
+		return fmt.Errorf("Cannot delete project: %v", err)
 	}
 	return nil
 }

@@ -26,6 +26,7 @@ func openSqlite() *gorm.DB {
 func main() {
 	db := openSqlite()
 	pr := project.GormRepository{DB: db}
+	er := entry.GormRepository{DB: db}
 	projects, err := pr.GetAllProjects()
 	if err != nil {
 		log.Fatal(err)
@@ -37,6 +38,6 @@ func main() {
 			log.Fatal(errors.Wrap(err, "error creating project"))
 		}
 	} else {
-		tui.StartTea(pr, entry.GormRepository{DB: db})
+		tui.StartTea(pr, er)
 	}
 }

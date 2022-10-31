@@ -1,15 +1,19 @@
-package entryui
+package tui
 
 import (
 	"fmt"
 	"os"
 	"os/exec"
 
+	"github.com/bashbunni/project-management/project"
+	"github.com/bashbunni/project-management/tui/constants"
 	"github.com/bashbunni/project-management/utils"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 const defaultEditor = "vim"
+
+/* PROJECTS */
 
 func openEditorCmd() tea.Cmd {
 	file, err := os.CreateTemp(os.TempDir(), "")
@@ -28,14 +32,13 @@ func openEditorCmd() tea.Cmd {
 	})
 }
 
-func (m Model) createEntryCmd(file *os.File) tea.Cmd {
+func (m Entry) createEntryCmd(file *os.File) tea.Cmd {
 	return func() tea.Msg {
 		input, err := utils.ReadFile(file)
 		if err != nil {
 			return errMsg{fmt.Errorf("cannot read file in createEntryCmd: %v", err)}
-			// TODO: why is this giving me an error when input != ""
 		}
-		if err := m.er.CreateEntry(input, m.activeProjectID); err != nil {
+		if err := constants.Er.CreateEntry(input, m.activeProjectID); err != nil {
 			return errMsg{fmt.Errorf("cannot create entry: %v", err)}
 		}
 		if err := os.Remove(file.Name()); err != nil {
@@ -45,5 +48,40 @@ func (m Model) createEntryCmd(file *os.File) tea.Cmd {
 			return errMsg{fmt.Errorf("unable to close file: %v", err)}
 		}
 		return m.setupEntries()
+	}
+}
+
+/* ENTRIES */
+
+func createProjectCmd(name string, pr *project.GormRepository) tea.Cmd {
+	return func() tea.Msg {
+		_, err := pr.CreateProject(name)
+		if err != nil {
+			return errMsg{err}
+		}
+		return updateProjectListMsg{}
+	}
+}
+
+func renameProjectCmd(id uint, pr *project.GormRepository, name string) tea.Cmd {
+	return func() tea.Msg {
+		pr.RenameProject(id, name)
+		projects, err := pr.GetAllProjects()
+		if err != nil {
+			return errMsg{err}
+		}
+		items := projectsToItems(projects)
+
+		return renameProjectMsg(items)
+	}
+}
+
+func deleteProjectCmd(id uint, pr *project.GormRepository) tea.Cmd {
+	return func() tea.Msg {
+		err := pr.DeleteProject(id)
+		if err != nil {
+			return errMsg{err}
+		}
+		return updateProjectListMsg{}
 	}
 }
