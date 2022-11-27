@@ -7,11 +7,12 @@ type Model interface{}
 var models = []Model{}
 
 func AutoMigrate(db dbconn.GormWrapper) error {
-	for _, m := range models {
-		if err := db.AutoMigrate(m); err != nil {
+	if models != nil {
+		if err := db.AutoMigrate(models); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/bashbunni/project-management/database/models"
 	"github.com/bashbunni/project-management/database/repos"
 	"github.com/bashbunni/project-management/entry"
 	"github.com/bashbunni/project-management/tui/constants"
@@ -18,7 +19,7 @@ import (
 type (
 	errMsg struct{ error }
 	// UpdatedEntries holds the new entries from DB
-	UpdatedEntries []entry.Entry
+	UpdatedEntries []models.Entry
 )
 
 type editorFinishedMsg struct {
@@ -36,7 +37,7 @@ type Entry struct {
 	activeProjectID uint
 	error           string
 	paginator       paginator.Model
-	entries         []entry.Entry
+	entries         []models.Entry
 	quitting        bool
 }
 
@@ -67,7 +68,7 @@ func InitEntry(pr repos.ProjectRepository, er *entry.GormRepository, activeProje
 
 func (m *Entry) setupEntries() tea.Msg {
 	var err error
-	var entries []entry.Entry
+	var entries []models.Entry
 	if entries, err = constants.Er.GetEntriesByProjectID(m.activeProjectID); err != nil {
 		return errMsg{fmt.Errorf("Cannot find project: %v", err)}
 	}

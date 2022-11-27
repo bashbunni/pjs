@@ -8,6 +8,10 @@ import (
 	"github.com/bashbunni/project-management/database/models"
 )
 
+const (
+	format string = "%d : %s\n"
+)
+
 type ProjectRepository interface {
 	PrintProjects()
 	HasProjects() bool
@@ -26,7 +30,15 @@ func NewProjectRepo(db dbconn.GormWrapper) ProjectRepository {
 	return projectRepo{dbConn: db}
 }
 
-func (r projectRepo) PrintProjects() {}
+func (r projectRepo) PrintProjects() {
+	projects, err := r.GetAllProjects()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, project := range projects {
+		fmt.Printf(format, project.ID, project.Name)
+	}
+}
 
 func (r projectRepo) HasProjects() bool {
 	return false

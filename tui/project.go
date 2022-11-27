@@ -5,7 +5,6 @@ import (
 
 	"github.com/bashbunni/project-management/database/models"
 	"github.com/bashbunni/project-management/database/repos"
-	"github.com/bashbunni/project-management/project"
 	"github.com/bashbunni/project-management/tui/constants"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
@@ -50,7 +49,7 @@ func InitProject(pr repos.ProjectRepository) tea.Model {
 	input.Width = 50
 
 	items := newProjectList(pr)
-	m := Model{mode: nav, list: list.NewModel(items, list.NewDefaultDelegate(), 8, 8), input: input}
+	m := Model{pr: pr, mode: nav, list: list.NewModel(items, list.NewDefaultDelegate(), 8, 8), input: input}
 	if constants.WindowSize.Height != 0 {
 		top, right, bottom, left := constants.DocStyle.GetMargin()
 		m.list.SetSize(constants.WindowSize.Width-left-right, constants.WindowSize.Height-top-bottom-1)
@@ -131,7 +130,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.quitting = true
 				return m, tea.Quit
 			case key.Matches(msg, constants.Keymap.Enter):
-				activeProject := m.list.SelectedItem().(project.Project)
+				activeProject := m.list.SelectedItem().(models.Project)
 				entry := InitEntry(m.pr, constants.Er, activeProject.ID, constants.P)
 				return entry.Update(constants.WindowSize)
 			case key.Matches(msg, constants.Keymap.Rename):
@@ -176,5 +175,5 @@ func projectsToItems(projects []models.Project) []list.Item {
 func (m Model) getActiveProjectID() uint {
 	items := m.list.Items()
 	activeItem := items[m.list.Index()]
-	return activeItem.(project.Project).ID
+	return activeItem.(models.Project).ID
 }

@@ -1,9 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
-	dbx "github.com/bashbunni/project-management/database"
+	"github.com/bashbunni/project-management/database/dbconn"
 	"github.com/bashbunni/project-management/database/models"
 	"github.com/bashbunni/project-management/database/repos"
 	"github.com/bashbunni/project-management/entry"
@@ -19,22 +20,33 @@ func openSqlite() *gorm.DB {
 	if err != nil {
 		log.Fatalf("unable to open database: %v", err)
 	}
-	err = db.AutoMigrate(&entry.Entry{}, &project.Project{})
+	err = db.AutoMigrate(&models.Entry{}, &models.Project{})
 	if err != nil {
 		log.Fatal(err)
 	}
 	return db
 }
 
-func main() {
-	if err := dbx.Setup(); err != nil {
-		log.Fatalf("unable to create db: %s\n", err)
+func openWrappedDB() (dbconn.GormWrapper, error) {
+	db, err := gorm.Open(sqlite.Open("new.db"), &gorm.Config{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to open db: %w", err)
 	}
 
-	db, err := dbx.Connect()
-	if err != nil {
-		log.Fatalf("unable to connect to db: %s\n", err)
+	wdb := dbconn.Wrap(db)
+	if err := models.AutoMigrate(wdb); err != nil {
+		return nil, err
 	}
+	return wdb, nil
+}
+
+func main() {
+	// db, err := openWrappedDB()
+	// if err != nil {
+	// 	log.Fatalf("unable to connect to db: %s\n", err)
+	// }
+
+	db := dbconn.Wrap(openSqlite())
 
 	pr := repos.NewProjectRepo(db)
 	er := entry.GormRepository{WDB: db}
