@@ -2,7 +2,6 @@ package constants
 
 import (
 	"github.com/bashbunni/project-management/entry"
-	"github.com/bashbunni/project-management/project"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -16,7 +15,7 @@ var (
 	// Er the entry repository for the tui
 	Er *entry.GormRepository
 	// Pr the project repository for the tui
-	Pr *project.GormRepository
+	// Pr *project.GormRepository
 	// WindowSize store the size of the terminal window
 	WindowSize tea.WindowSizeMsg
 )

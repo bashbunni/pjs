@@ -3,6 +3,9 @@ package main
 import (
 	"log"
 
+	dbx "github.com/bashbunni/project-management/database"
+	"github.com/bashbunni/project-management/database/models"
+	"github.com/bashbunni/project-management/database/repos"
 	"github.com/bashbunni/project-management/entry"
 	"github.com/bashbunni/project-management/project"
 	"github.com/bashbunni/project-management/tui"
@@ -24,17 +27,24 @@ func openSqlite() *gorm.DB {
 }
 
 func main() {
-	db := openSqlite()
-	pr := project.GormRepository{DB: db}
-	er := entry.GormRepository{DB: db}
+	if err := dbx.Setup(); err != nil {
+		log.Fatalf("unable to create db: %s\n", err)
+	}
+
+	db, err := dbx.Connect()
+	if err != nil {
+		log.Fatalf("unable to connect to db: %s\n", err)
+	}
+
+	pr := repos.NewProjectRepo(db)
+	er := entry.GormRepository{WDB: db}
 	projects, err := pr.GetAllProjects()
 	if err != nil {
 		log.Fatal(err)
 	}
 	if len(projects) < 1 {
 		name := project.NewProjectPrompt()
-		_, err := pr.CreateProject(name)
-		if err != nil {
+		if err := pr.CreateProject(&models.Project{Name: name}); err != nil {
 			log.Fatal(errors.Wrap(err, "error creating project"))
 		}
 	} else {

@@ -3,6 +3,8 @@ package tui
 import (
 	"log"
 
+	"github.com/bashbunni/project-management/database/models"
+	"github.com/bashbunni/project-management/database/repos"
 	"github.com/bashbunni/project-management/project"
 	"github.com/bashbunni/project-management/tui/constants"
 	"github.com/charmbracelet/bubbles/key"
@@ -32,6 +34,7 @@ const (
 
 // Model the entryui model definition
 type Model struct {
+	pr       repos.ProjectRepository
 	mode     mode
 	list     list.Model
 	input    textinput.Model
@@ -39,14 +42,14 @@ type Model struct {
 }
 
 // InitProject initialize the projectui model for your program
-func InitProject() tea.Model {
+func InitProject(pr repos.ProjectRepository) tea.Model {
 	input := textinput.New()
 	input.Prompt = "$ "
 	input.Placeholder = "Project name..."
 	input.CharLimit = 250
 	input.Width = 50
 
-	items := newProjectList(constants.Pr)
+	items := newProjectList(pr)
 	m := Model{mode: nav, list: list.NewModel(items, list.NewDefaultDelegate(), 8, 8), input: input}
 	if constants.WindowSize.Height != 0 {
 		top, right, bottom, left := constants.DocStyle.GetMargin()
@@ -64,7 +67,7 @@ func InitProject() tea.Model {
 	return m
 }
 
-func newProjectList(pr *project.GormRepository) []list.Item {
+func newProjectList(pr repos.ProjectRepository) []list.Item {
 	projects, err := pr.GetAllProjects()
 	if err != nil {
 		log.Fatal(err)
@@ -87,7 +90,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		top, right, bottom, left := constants.DocStyle.GetMargin()
 		m.list.SetSize(msg.Width-left-right, msg.Height-top-bottom-1)
 	case updateProjectListMsg:
-		projects, err := constants.Pr.GetAllProjects()
+		projects, err := m.pr.GetAllProjects()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -101,10 +104,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if m.input.Focused() {
 			if key.Matches(msg, constants.Keymap.Enter) {
 				if m.mode == create {
-					cmds = append(cmds, createProjectCmd(m.input.Value(), constants.Pr))
+					cmds = append(cmds, createProjectCmd(m.input.Value(), m.pr))
 				}
 				if m.mode == edit {
-					cmds = append(cmds, renameProjectCmd(m.getActiveProjectID(), constants.Pr, m.input.Value()))
+					cmds = append(cmds, renameProjectCmd(m.getActiveProjectID(), m.pr, m.input.Value()))
 				}
 				m.input.SetValue("")
 				m.mode = nav
@@ -129,7 +132,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			case key.Matches(msg, constants.Keymap.Enter):
 				activeProject := m.list.SelectedItem().(project.Project)
-				entry := InitEntry(constants.Er, activeProject.ID, constants.P)
+				entry := InitEntry(m.pr, constants.Er, activeProject.ID, constants.P)
 				return entry.Update(constants.WindowSize)
 			case key.Matches(msg, constants.Keymap.Rename):
 				m.mode = edit
@@ -138,7 +141,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case key.Matches(msg, constants.Keymap.Delete):
 				items := m.list.Items()
 				if len(items) > 0 {
-					cmd = deleteProjectCmd(m.getActiveProjectID(), constants.Pr)
+					cmd = deleteProjectCmd(m.getActiveProjectID(), m.pr)
 				}
 			default:
 				m.list, cmd = m.list.Update(msg)
@@ -162,7 +165,7 @@ func (m Model) View() string {
 
 // TODO: use generics
 // projectsToItems convert []model.Project to []list.Item
-func projectsToItems(projects []project.Project) []list.Item {
+func projectsToItems(projects []models.Project) []list.Item {
 	items := make([]list.Item, len(projects))
 	for i, proj := range projects {
 		items[i] = list.Item(proj)

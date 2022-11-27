@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/bashbunni/project-management/database/repos"
 	"github.com/bashbunni/project-management/entry"
 	"github.com/bashbunni/project-management/tui/constants"
 	"github.com/charmbracelet/bubbles/key"
@@ -29,6 +30,8 @@ var cmd tea.Cmd
 
 // Entry implements tea.Model
 type Entry struct {
+	pr              repos.ProjectRepository
+	er              *entry.GormRepository
 	viewport        viewport.Model
 	activeProjectID uint
 	error           string
@@ -43,8 +46,8 @@ func (m Entry) Init() tea.Cmd {
 }
 
 // InitEntry initialize the entryui model for your program
-func InitEntry(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *Entry {
-	m := Entry{activeProjectID: activeProjectID}
+func InitEntry(pr repos.ProjectRepository, er *entry.GormRepository, activeProjectID uint, p *tea.Program) *Entry {
+	m := Entry{pr: pr, er: er, activeProjectID: activeProjectID}
 	top, right, bottom, left := constants.DocStyle.GetMargin()
 	m.viewport = viewport.New(constants.WindowSize.Width-left-right, constants.WindowSize.Height-top-bottom-1)
 	m.viewport.Style = lipgloss.NewStyle().Align(lipgloss.Bottom)
@@ -112,7 +115,7 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.quitting = true
 			return m, openEditorCmd()
 		case key.Matches(msg, constants.Keymap.Back):
-			return InitProject(), nil
+			return InitProject(m.pr), nil // would probably redesign this whole part so that this isn't necessary...
 		case key.Matches(msg, constants.Keymap.Quit):
 			m.quitting = true
 			return m, tea.Quit
