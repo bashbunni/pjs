@@ -17,6 +17,7 @@ type MockGormWrapper interface {
 type mockGormWrapper struct {
 	automigrateError         error
 	error                    error
+	unscoped                 bool
 	triedToFind, triedToSave interface{}
 	created                  []interface{}
 	deleted                  []interface{}
@@ -124,6 +125,11 @@ func (w *mockGormWrapper) First(dest interface{}, conds ...interface{}) GormWrap
 
 func (w *mockGormWrapper) Find(dest interface{}, conds ...interface{}) GormWrapper {
 	w.triedToFind = dest
+	return w
+}
+
+func (w *mockGormWrapper) Unscoped() GormWrapper {
+	w.unscoped = true
 	return w
 }
 

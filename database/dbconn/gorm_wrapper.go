@@ -14,6 +14,7 @@ type GormWrapper interface {
 	Where(interface{}, ...interface{}) GormWrapper
 	First(interface{}, ...interface{}) GormWrapper
 	Find(interface{}, ...interface{}) GormWrapper
+	Unscoped() GormWrapper
 	Save(interface{}) GormWrapper
 }
 
@@ -54,12 +55,17 @@ func (w *wrapper) Where(query interface{}, args ...interface{}) GormWrapper {
 }
 
 func (w *wrapper) First(dest interface{}, conds ...interface{}) GormWrapper {
-	w.db.First(dest, conds)
+	w.db = w.db.First(dest, conds)
 	return w
 }
 
 func (w *wrapper) Find(dest interface{}, conds ...interface{}) GormWrapper {
 	w.db.Find(dest, conds)
+	return w
+}
+
+func (w *wrapper) Unscoped() GormWrapper {
+	w.db = w.db.Unscoped()
 	return w
 }
 

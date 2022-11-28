@@ -1,6 +1,7 @@
 package project
 
 import (
+	"fmt"
 	"log"
 	"reflect"
 	"testing"
@@ -20,6 +21,7 @@ func Setup(t *testing.T) dbconn.GormWrapper {
 	}
 	db.AutoMigrate(&models.Project{})
 	t.Cleanup(func() {
+		fmt.Println("dropping project")
 		db.Migrator().DropTable(&models.Project{})
 	})
 	return dbconn.Wrap(db)

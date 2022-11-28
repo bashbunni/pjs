@@ -41,7 +41,10 @@ func (r projectRepo) PrintProjects() {
 }
 
 func (r projectRepo) HasProjects() bool {
-	return false
+	if projects, _ := r.GetAllProjects(); len(projects) == 0 {
+		return false
+	}
+	return true
 }
 func (r projectRepo) GetProjectByID(id uint) (models.Project, error) {
 	p := models.Project{}
