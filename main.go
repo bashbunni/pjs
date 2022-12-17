@@ -7,7 +7,6 @@ import (
 	"github.com/bashbunni/project-management/database/dbconn"
 	"github.com/bashbunni/project-management/database/models"
 	"github.com/bashbunni/project-management/database/repos"
-	"github.com/bashbunni/project-management/entry"
 	"github.com/bashbunni/project-management/project"
 	"github.com/bashbunni/project-management/tui"
 	"github.com/pkg/errors"
@@ -49,7 +48,7 @@ func main() {
 	db := dbconn.Wrap(openSqlite())
 
 	pr := repos.NewProjectRepo(db)
-	er := entry.GormRepository{WDB: db}
+	er := repos.NewEntryRepo(db)
 	projects, err := pr.GetAllProjects()
 	if err != nil {
 		log.Fatal(err)

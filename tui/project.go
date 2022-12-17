@@ -34,6 +34,7 @@ const (
 // Model the entryui model definition
 type Model struct {
 	pr       repos.ProjectRepository
+	er       repos.EntryRepository
 	mode     mode
 	list     list.Model
 	input    textinput.Model
@@ -41,7 +42,7 @@ type Model struct {
 }
 
 // InitProject initialize the projectui model for your program
-func InitProject(pr repos.ProjectRepository) tea.Model {
+func InitProject(pr repos.ProjectRepository, er repos.EntryRepository) tea.Model {
 	input := textinput.New()
 	input.Prompt = "$ "
 	input.Placeholder = "Project name..."
@@ -49,7 +50,7 @@ func InitProject(pr repos.ProjectRepository) tea.Model {
 	input.Width = 50
 
 	items := newProjectList(pr)
-	m := Model{pr: pr, mode: nav, list: list.NewModel(items, list.NewDefaultDelegate(), 8, 8), input: input}
+	m := Model{pr: pr, er: er, mode: nav, list: list.NewModel(items, list.NewDefaultDelegate(), 8, 8), input: input}
 	if constants.WindowSize.Height != 0 {
 		top, right, bottom, left := constants.DocStyle.GetMargin()
 		m.list.SetSize(constants.WindowSize.Width-left-right, constants.WindowSize.Height-top-bottom-1)
@@ -131,7 +132,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			case key.Matches(msg, constants.Keymap.Enter):
 				activeProject := m.list.SelectedItem().(models.Project)
-				entry := InitEntry(m.pr, constants.Er, activeProject.ID, constants.P)
+				entry := InitEntry(m.pr, m.er, activeProject.ID, constants.P)
 				return entry.Update(constants.WindowSize)
 			case key.Matches(msg, constants.Keymap.Rename):
 				m.mode = edit

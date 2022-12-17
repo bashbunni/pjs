@@ -7,7 +7,6 @@ import (
 
 	"github.com/bashbunni/project-management/database/models"
 	"github.com/bashbunni/project-management/database/repos"
-	"github.com/bashbunni/project-management/tui/constants"
 	"github.com/bashbunni/project-management/utils"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -39,7 +38,7 @@ func (m Entry) createEntryCmd(file *os.File) tea.Cmd {
 		if err != nil {
 			return errMsg{fmt.Errorf("cannot read file in createEntryCmd: %v", err)}
 		}
-		if err := constants.Er.CreateEntry(input, m.activeProjectID); err != nil {
+		if err := m.er.CreateEntryInProjectOfID(input, m.activeProjectID); err != nil {
 			return errMsg{fmt.Errorf("cannot create entry: %v", err)}
 		}
 		if err := os.Remove(file.Name()); err != nil {
