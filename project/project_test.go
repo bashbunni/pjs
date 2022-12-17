@@ -1,38 +1,43 @@
 package project
 
 import (
+	"fmt"
 	"log"
 	"reflect"
 	"testing"
 
+	"github.com/bashbunni/project-management/database/dbconn"
+	"github.com/bashbunni/project-management/database/models"
+	"github.com/bashbunni/project-management/database/repos"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
-func Setup(t *testing.T) *gorm.DB {
+func Setup(t *testing.T) dbconn.GormWrapper {
 	t.Helper() // allows me to log Gorm errors later
 	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("unable to open in-memory SQLite DB: %v", err)
 	}
-	db.AutoMigrate(&Project{})
+	db.AutoMigrate(&models.Project{})
 	t.Cleanup(func() {
-		db.Migrator().DropTable(&Project{})
+		fmt.Println("dropping project")
+		db.Migrator().DropTable(&models.Project{})
 	})
-	return db
+	return dbconn.Wrap(db)
 }
 
 // TestCreateProject
 
 func TestCreateProjectForEmptyDB(t *testing.T) {
 	db := Setup(t)
-	pr := GormRepository{DB: db}
+	pr := repos.NewProjectRepo(db)
 
-	pr.CreateProject("hello")
-	pr.CreateProject("world")
+	pr.CreateProject(&models.Project{Name: "hello"})
+	pr.CreateProject(&models.Project{Name: "world"})
 
 	got, _ := pr.GetAllProjects()
-	want := []Project{{Name: "hello"}, {Name: "world"}}
+	want := []models.Project{{Name: "hello"}, {Name: "world"}}
 	for i := range want {
 		if got[i].Name != want[i].Name {
 			t.Errorf("got %s want %s", got[i].Name, want[i].Name)
@@ -44,7 +49,7 @@ func TestCreateProjectForEmptyDB(t *testing.T) {
 
 func TestHasNoProjectsForEmptyDB(t *testing.T) {
 	db := Setup(t)
-	pr := GormRepository{DB: db}
+	pr := repos.NewProjectRepo(db)
 
 	got := pr.HasProjects()
 	want := false
@@ -55,10 +60,10 @@ func TestHasNoProjectsForEmptyDB(t *testing.T) {
 
 func TestHasTwoProjects(t *testing.T) {
 	db := Setup(t)
-	pr := GormRepository{DB: db}
+	pr := repos.NewProjectRepo(db)
 
-	pr.CreateProject("hello")
-	pr.CreateProject("world")
+	pr.CreateProject(&models.Project{Name: "hello"})
+	pr.CreateProject(&models.Project{Name: "world"})
 
 	got := pr.HasProjects()
 	want := true
@@ -71,7 +76,7 @@ func TestHasTwoProjects(t *testing.T) {
 
 func TestGetProjectsFromEmptyDB(t *testing.T) {
 	db := Setup(t)
-	pr := GormRepository{DB: db}
+	pr := repos.NewProjectRepo(db)
 
 	got, _ := pr.GetAllProjects()
 	if len(got) != 0 {
@@ -81,13 +86,13 @@ func TestGetProjectsFromEmptyDB(t *testing.T) {
 
 func TestGetTwoProjects(t *testing.T) {
 	db := Setup(t)
-	pr := GormRepository{DB: db}
+	pr := repos.NewProjectRepo(db)
 
-	pr.CreateProject("hello")
-	pr.CreateProject("world")
+	pr.CreateProject(&models.Project{Name: "hello"})
+	pr.CreateProject(&models.Project{Name: "world"})
 
 	got, _ := pr.GetAllProjects()
-	want := []Project{{Name: "hello"}, {Name: "world"}}
+	want := []models.Project{{Name: "hello"}, {Name: "world"}}
 	for i := range want {
 		if got[i].Name != want[i].Name {
 			t.Errorf("got %s want %s", got[i].Name, want[i].Name)
@@ -99,7 +104,7 @@ func TestGetTwoProjects(t *testing.T) {
 
 func TestGetProjectFromEmptyDB(t *testing.T) {
 	db := Setup(t)
-	pr := GormRepository{DB: db}
+	pr := repos.NewProjectRepo(db)
 
 	_, err := pr.GetProjectByID(1)
 	if err == nil {
@@ -109,13 +114,13 @@ func TestGetProjectFromEmptyDB(t *testing.T) {
 
 func TestGetProjectFromNonEmptyDB(t *testing.T) {
 	db := Setup(t)
-	pr := GormRepository{DB: db}
+	pr := repos.NewProjectRepo(db)
 
-	pr.CreateProject("hello")
-	pr.CreateProject("world")
+	pr.CreateProject(&models.Project{Name: "hello"})
+	pr.CreateProject(&models.Project{Name: "world"})
 
 	got, err := pr.GetProjectByID(1)
-	want := Project{Name: "hello"}
+	want := models.Project{Name: "hello"}
 	if err != nil || reflect.DeepEqual(got, want) {
 		t.Errorf("got %s want %s. err == %v", got.Name, want.Name, err)
 	}

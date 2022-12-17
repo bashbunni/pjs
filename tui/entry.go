@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/bashbunni/project-management/database/models"
+	"github.com/bashbunni/project-management/database/repos"
 	"github.com/bashbunni/project-management/entry"
 	"github.com/bashbunni/project-management/tui/constants"
 	"github.com/charmbracelet/bubbles/key"
@@ -17,7 +19,7 @@ import (
 type (
 	errMsg struct{ error }
 	// UpdatedEntries holds the new entries from DB
-	UpdatedEntries []entry.Entry
+	UpdatedEntries []models.Entry
 )
 
 type editorFinishedMsg struct {
@@ -29,11 +31,13 @@ var cmd tea.Cmd
 
 // Entry implements tea.Model
 type Entry struct {
+	pr              repos.ProjectRepository
+	er              repos.EntryRepository
 	viewport        viewport.Model
 	activeProjectID uint
 	error           string
 	paginator       paginator.Model
-	entries         []entry.Entry
+	entries         []models.Entry
 	quitting        bool
 }
 
@@ -43,8 +47,8 @@ func (m Entry) Init() tea.Cmd {
 }
 
 // InitEntry initialize the entryui model for your program
-func InitEntry(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *Entry {
-	m := Entry{activeProjectID: activeProjectID}
+func InitEntry(pr repos.ProjectRepository, er repos.EntryRepository, activeProjectID uint, p *tea.Program) *Entry {
+	m := Entry{pr: pr, er: er, activeProjectID: activeProjectID}
 	top, right, bottom, left := constants.DocStyle.GetMargin()
 	m.viewport = viewport.New(constants.WindowSize.Width-left-right, constants.WindowSize.Height-top-bottom-1)
 	m.viewport.Style = lipgloss.NewStyle().Align(lipgloss.Bottom)
@@ -64,9 +68,9 @@ func InitEntry(er *entry.GormRepository, activeProjectID uint, p *tea.Program) *
 
 func (m *Entry) setupEntries() tea.Msg {
 	var err error
-	var entries []entry.Entry
-	if entries, err = constants.Er.GetEntriesByProjectID(m.activeProjectID); err != nil {
-		return errMsg{fmt.Errorf("Cannot find project: %v", err)}
+	var entries []models.Entry
+	if entries, err = m.er.GetEntriesByProjectID(m.activeProjectID); err != nil {
+		return errMsg{fmt.Errorf("cannot find project: %s", err)}
 	}
 	entries = entry.ReverseList(entries)
 	return UpdatedEntries(entries)
@@ -112,7 +116,7 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.quitting = true
 			return m, openEditorCmd()
 		case key.Matches(msg, constants.Keymap.Back):
-			return InitProject(), nil
+			return InitProject(m.pr, m.er), nil // would probably redesign this whole part so that this isn't necessary...
 		case key.Matches(msg, constants.Keymap.Quit):
 			m.quitting = true
 			return m, tea.Quit

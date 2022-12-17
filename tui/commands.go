@@ -5,8 +5,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/bashbunni/project-management/project"
-	"github.com/bashbunni/project-management/tui/constants"
+	"github.com/bashbunni/project-management/database/models"
+	"github.com/bashbunni/project-management/database/repos"
 	"github.com/bashbunni/project-management/utils"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -38,7 +38,7 @@ func (m Entry) createEntryCmd(file *os.File) tea.Cmd {
 		if err != nil {
 			return errMsg{fmt.Errorf("cannot read file in createEntryCmd: %v", err)}
 		}
-		if err := constants.Er.CreateEntry(input, m.activeProjectID); err != nil {
+		if err := m.er.CreateEntryInProjectOfID(input, m.activeProjectID); err != nil {
 			return errMsg{fmt.Errorf("cannot create entry: %v", err)}
 		}
 		if err := os.Remove(file.Name()); err != nil {
@@ -53,17 +53,16 @@ func (m Entry) createEntryCmd(file *os.File) tea.Cmd {
 
 /* ENTRIES */
 
-func createProjectCmd(name string, pr *project.GormRepository) tea.Cmd {
+func createProjectCmd(name string, pr repos.ProjectRepository) tea.Cmd {
 	return func() tea.Msg {
-		_, err := pr.CreateProject(name)
-		if err != nil {
+		if err := pr.CreateProject(&models.Project{Name: name}); err != nil {
 			return errMsg{err}
 		}
 		return updateProjectListMsg{}
 	}
 }
 
-func renameProjectCmd(id uint, pr *project.GormRepository, name string) tea.Cmd {
+func renameProjectCmd(id uint, pr repos.ProjectRepository, name string) tea.Cmd {
 	return func() tea.Msg {
 		pr.RenameProject(id, name)
 		projects, err := pr.GetAllProjects()
@@ -76,7 +75,7 @@ func renameProjectCmd(id uint, pr *project.GormRepository, name string) tea.Cmd 
 	}
 }
 
-func deleteProjectCmd(id uint, pr *project.GormRepository) tea.Cmd {
+func deleteProjectCmd(id uint, pr repos.ProjectRepository) tea.Cmd {
 	return func() tea.Msg {
 		err := pr.DeleteProject(id)
 		if err != nil {
