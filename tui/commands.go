@@ -5,9 +5,9 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/bashbunni/project-management/project"
-	"github.com/bashbunni/project-management/tui/constants"
-	"github.com/bashbunni/project-management/utils"
+	"github.com/bashbunni/pjs/project"
+	"github.com/bashbunni/pjs/tui/constants"
+	"github.com/bashbunni/pjs/utils"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
