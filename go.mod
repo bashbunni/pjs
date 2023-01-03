@@ -1,4 +1,4 @@
-module github.com/bashbunni/project-management
+module github.com/bashbunni/pjs
 
 go 1.17
 
