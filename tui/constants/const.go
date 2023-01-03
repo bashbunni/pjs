@@ -1,8 +1,8 @@
 package constants
 
 import (
-	"github.com/bashbunni/project-management/entry"
-	"github.com/bashbunni/project-management/project"
+	"github.com/bashbunni/pjs/entry"
+	"github.com/bashbunni/pjs/project"
 	"github.com/charmbracelet/bubbles/key"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

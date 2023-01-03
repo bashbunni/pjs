@@ -3,9 +3,9 @@ package main
 import (
 	"log"
 
-	"github.com/bashbunni/project-management/entry"
-	"github.com/bashbunni/project-management/project"
-	"github.com/bashbunni/project-management/tui"
+	"github.com/bashbunni/pjs/entry"
+	"github.com/bashbunni/pjs/project"
+	"github.com/bashbunni/pjs/tui"
 	"github.com/pkg/errors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
