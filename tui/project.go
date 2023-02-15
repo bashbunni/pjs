@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/bashbunni/pjs/project"
@@ -39,14 +40,14 @@ type Model struct {
 }
 
 // InitProject initialize the projectui model for your program
-func InitProject() tea.Model {
+func InitProject() (tea.Model, tea.Cmd) {
 	input := textinput.New()
 	input.Prompt = "$ "
 	input.Placeholder = "Project name..."
 	input.CharLimit = 250
 	input.Width = 50
 
-	items := newProjectList(constants.Pr)
+	items, err := newProjectList(constants.Pr)
 	m := Model{mode: nav, list: list.NewModel(items, list.NewDefaultDelegate(), 8, 8), input: input}
 	if constants.WindowSize.Height != 0 {
 		top, right, bottom, left := constants.DocStyle.GetMargin()
@@ -61,15 +62,15 @@ func InitProject() tea.Model {
 			constants.Keymap.Back,
 		}
 	}
-	return m
+	return m, func() tea.Msg { return errMsg{err} }
 }
 
-func newProjectList(pr *project.GormRepository) []list.Item {
+func newProjectList(pr *project.GormRepository) ([]list.Item, error) {
 	projects, err := pr.GetAllProjects()
 	if err != nil {
-		log.Fatal(err)
+		return nil, fmt.Errorf("cannot get all projects: %w", err)
 	}
-	return projectsToItems(projects)
+	return projectsToItems(projects), err
 }
 
 // Init run any intial IO on program start

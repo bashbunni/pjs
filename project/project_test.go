@@ -1,7 +1,6 @@
 package project
 
 import (
-	"log"
 	"reflect"
 	"testing"
 
@@ -13,7 +12,7 @@ func Setup(t *testing.T) *gorm.DB {
 	t.Helper() // allows me to log Gorm errors later
 	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("unable to open in-memory SQLite DB: %v", err)
+		t.Fatalf("unable to open in-memory SQLite DB: %v", err)
 	}
 	db.AutoMigrate(&Project{})
 	t.Cleanup(func() {

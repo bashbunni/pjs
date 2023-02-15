@@ -7,7 +7,6 @@ require (
 	github.com/charmbracelet/bubbletea v0.22.1
 	github.com/charmbracelet/glamour v0.5.0
 	github.com/charmbracelet/lipgloss v0.6.0
-	github.com/pkg/errors v0.9.1
 	gorm.io/driver/sqlite v1.4.3
 	gorm.io/gorm v1.24.0
 )

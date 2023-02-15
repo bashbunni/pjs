@@ -1,29 +1,32 @@
 package entry
 
 import (
-	"log"
+	"fmt"
 	"testing"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
-func Setup(t *testing.T) *gorm.DB {
+func Setup(t *testing.T) (*gorm.DB, error) {
 	t.Helper() // allows me to log Gorm errors later
 	db, err := gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("unable to open in-memory SQLite DB: %v", err)
+		return db, fmt.Errorf("unable to open in-memory SQLite DB: %w", err)
 	}
 	db.AutoMigrate(&Entry{})
 	t.Cleanup(func() {
 		db.Migrator().DropTable(&Entry{})
 	})
-	return db
+	return db, nil
 }
 
 // DeleteEntryByID
 func TestDeleteEntryForEmptyDB(t *testing.T) {
-	db := Setup(t)
+	db, err := Setup(t)
+	if err != nil {
+		t.Fatal(err)
+	}
 	er := GormRepository{DB: db}
 
 	er.DeleteEntryByID(1)
@@ -33,7 +36,10 @@ func TestDeleteEntryForEmptyDB(t *testing.T) {
 }
 
 func TestDeleteEntryWithTwoEntries(t *testing.T) {
-	db := Setup(t)
+	db, err := Setup(t)
+	if err != nil {
+		t.Fatal(err)
+	}
 	er := GormRepository{DB: db}
 
 	er.CreateEntry([]byte("hello world"), 1)
@@ -47,7 +53,11 @@ func TestDeleteEntryWithTwoEntries(t *testing.T) {
 
 // DeleteEntries
 func TestDeleteEntriesForEmptyDB(t *testing.T) {
-	db := Setup(t)
+	db, err := Setup(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	er := GormRepository{DB: db}
 
 	er.DeleteEntries(1)
@@ -57,7 +67,11 @@ func TestDeleteEntriesForEmptyDB(t *testing.T) {
 }
 
 func TestDeleteEntriesWithTwoEntries(t *testing.T) {
-	db := Setup(t)
+	db, err := Setup(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	er := GormRepository{DB: db}
 
 	er.CreateEntry([]byte("hello world"), 1)
@@ -71,7 +85,11 @@ func TestDeleteEntriesWithTwoEntries(t *testing.T) {
 
 // GetEntriesByProjectID
 func TestGetEntriesByProjectIDForEmptyDB(t *testing.T) {
-	db := Setup(t)
+	db, err := Setup(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	er := GormRepository{DB: db}
 
 	got, _ := er.GetEntriesByProjectID(1)
@@ -81,7 +99,11 @@ func TestGetEntriesByProjectIDForEmptyDB(t *testing.T) {
 }
 
 func TestGetEntriesByProjectIDWithTwoEntries(t *testing.T) {
-	db := Setup(t)
+	db, err := Setup(t)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	er := GormRepository{DB: db}
 
 	er.CreateEntry([]byte("hello world"), 1)

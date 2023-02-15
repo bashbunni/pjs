@@ -1,30 +1,33 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/bashbunni/pjs/entry"
 	"github.com/bashbunni/pjs/project"
 	"github.com/bashbunni/pjs/tui"
-	"github.com/pkg/errors"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
-func openSqlite() *gorm.DB {
+func openSqlite() (*gorm.DB, error) {
 	db, err := gorm.Open(sqlite.Open("new.db"), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("unable to open database: %v", err)
+		return db, fmt.Errorf("unable to open database: %w", err)
 	}
 	err = db.AutoMigrate(&entry.Entry{}, &project.Project{})
 	if err != nil {
-		log.Fatal(err)
+		return db, fmt.Errorf("unable to migrate database: %w", err)
 	}
-	return db
+	return db, nil
 }
 
 func main() {
-	db := openSqlite()
+	db, err := openSqlite()
+	if err != nil {
+		log.Fatal(err)
+	}
 	pr := project.GormRepository{DB: db}
 	er := entry.GormRepository{DB: db}
 	projects, err := pr.GetAllProjects()
@@ -35,7 +38,7 @@ func main() {
 		name := project.NewProjectPrompt()
 		_, err := pr.CreateProject(name)
 		if err != nil {
-			log.Fatal(errors.Wrap(err, "error creating project"))
+			log.Fatalf("error creating project: %v", err)
 		}
 	} else {
 		tui.StartTea(pr, er)

@@ -112,7 +112,7 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.quitting = true
 			return m, openEditorCmd()
 		case key.Matches(msg, constants.Keymap.Back):
-			return InitProject(), nil
+			return InitProject()
 		case key.Matches(msg, constants.Keymap.Quit):
 			m.quitting = true
 			return m, tea.Quit

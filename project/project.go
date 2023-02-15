@@ -107,15 +107,16 @@ func (g *GormRepository) DeleteProject(projectID uint) error {
 }
 
 // RenameProject rename an existing project
-func (g *GormRepository) RenameProject(id uint, name string) {
+func (g *GormRepository) RenameProject(id uint, name string) error {
 	var newProject Project
 	if err := g.DB.Where("id = ?", id).First(&newProject).Error; err != nil {
-		log.Fatalf("Unable to rename project: %q", err)
+		return fmt.Errorf("Unable to rename project: %w", err)
 	}
 	newProject.Name = name
 	if err := g.DB.Save(&newProject).Error; err != nil {
-		log.Fatalf("Unable to save project: %q", err)
+		return fmt.Errorf("Unable to save project: %w", err)
 	}
+	return nil
 }
 
 // NewProjectPrompt create a new project from user input to console
