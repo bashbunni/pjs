@@ -11,7 +11,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-const defaultEditor = "vim"
+const (
+	defaultEditor = "vim"
+)
 
 /* PROJECTS */
 
