@@ -121,7 +121,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.quitting = true
 				return m, tea.Quit
 			case key.Matches(msg, Keymap.Enter):
-				// TODO: show entries
 				p := Project(currentProject)
 				e := InitEntry(p.Path())
 				return e, e.Init()

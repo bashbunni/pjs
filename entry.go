@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"time"
@@ -100,6 +101,8 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		WindowSize.Width = msg.Width
 		WindowSize.Height = msg.Height
+	case editorFinishedMsg:
+		m.setViewportContent()
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, Keymap.Quit):
@@ -111,7 +114,11 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, Keymap.Create):
 			cmds = append(cmds, openEditorCmd(NewFilePath(m.path)))
 		case key.Matches(msg, Keymap.Open):
-			cmds = append(cmds, openEditorCmd(m.currentFile()))
+			if len(m.entries) == 0 {
+				cmds = append(cmds, openEditorCmd(NewFilePath(m.path)))
+			} else {
+				cmds = append(cmds, openEditorCmd(m.currentFile()))
+			}
 		}
 	}
 	m.viewport, cmd = m.viewport.Update(msg)
@@ -131,12 +138,14 @@ func (m *Entry) setViewportContent() {
 	if len(m.entries) == 0 {
 		content = "There are no entries for this project :)"
 	} else {
-		content, _ = ReadFile(m.currentFile())
+		file := m.currentFile()
+		log.Println(file)
+		content, _ = ReadFile(file)
 	}
 	str, _ := glamour.Render(content, "dark")
 	m.viewport.SetContent(str)
 }
 
 func (m *Entry) currentFile() string {
-	return fmt.Sprintf("%s/%s.md", m.path, m.entries[m.paginator.Page])
+	return fmt.Sprintf("%s/%s", m.path, m.entries[m.paginator.Page])
 }
