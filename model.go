@@ -78,6 +78,7 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
+	currentProject := m.list.SelectedItem().FilterValue()
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		WindowSize.Width = msg.Width
@@ -95,7 +96,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				if m.mode == edit {
 					cmds = append(cmds, renameProjectCmd(
-						Project(m.list.SelectedItem().FilterValue()),
+						Project(currentProject),
 						m.input.Value()))
 				}
 				m.input.SetValue("")
@@ -121,12 +122,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, tea.Quit
 			case key.Matches(msg, Keymap.Enter):
 				// TODO: show entries
+				p := Project(currentProject)
+				e := InitEntry(p.Path())
+				return e, e.Init()
 			case key.Matches(msg, Keymap.Rename):
 				m.mode = edit
 				m.input.Focus()
 				cmd = textinput.Blink
 			case key.Matches(msg, Keymap.Delete):
-				cmd = deleteProjectCmd(Project(m.list.SelectedItem().FilterValue()))
+				cmd = deleteProjectCmd(Project(currentProject))
 			default:
 				m.list, cmd = m.list.Update(msg)
 			}

@@ -11,8 +11,9 @@ import (
 type Project string
 
 func NewProject(name string) (Project, error) {
-	err := write(name)
-	return Project(name), err
+	p := Project(name)
+	err := write(p.Path())
+	return p, err
 }
 
 // Path: returns the project path
