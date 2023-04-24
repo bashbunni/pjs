@@ -5,6 +5,7 @@ import (
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 // TODO: fix GormRepository vs Repository
@@ -36,6 +37,7 @@ type Model struct {
 	list     list.Model
 	input    textinput.Model
 	quitting bool
+	err      error
 }
 
 // InitProject initialize the projectui model for your program
@@ -85,6 +87,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		WindowSize.Height = msg.Height
 		top, right, bottom, left := DocStyle.GetMargin()
 		m.list.SetSize(msg.Width-left-right, msg.Height-top-bottom-1)
+	case errMsg:
+		m.err = msg
 	case SyncProjects:
 		items, _ := newList()
 		m.list.SetItems(items)
@@ -141,13 +145,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // View return the text UI to be output to the terminal
 func (m Model) View() string {
+	var err string
 	if m.quitting {
 		return ""
 	}
-	if m.input.Focused() {
-		return DocStyle.Render(m.list.View() + "\n" + m.input.View())
+	if m.err == nil {
+		err = ""
+	} else {
+		err = m.err.Error()
 	}
-	return DocStyle.Render(m.list.View() + "\n")
+	if m.input.Focused() {
+		return DocStyle.Render(
+			lipgloss.JoinVertical(
+				lipgloss.Left,
+				m.list.View(),
+				m.input.View(),
+				err,
+			))
+	}
+	return DocStyle.Render(
+		lipgloss.JoinVertical(
+			lipgloss.Left,
+			m.list.View(),
+			err,
+		))
 }
 
 // TODO: use generics

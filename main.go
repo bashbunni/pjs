@@ -14,10 +14,16 @@ import (
 // TODO: files named by date
 // TODO: add flag for opening a specific project without opening list
 
+// TODO: this should probably only get called on program start...
+// TODO: this could be named better...
 func checkHome(home string) error {
 	var mkDirErr error
 	if _, err := os.Stat(home); err != nil {
 		mkDirErr = os.Mkdir(home, 0o755)
+	}
+	archived := fmt.Sprintf("%s/.archived", home)
+	if _, err := os.Stat(archived); err != nil {
+		mkDirErr = os.Mkdir(archived, 0o755)
 	}
 	return mkDirErr
 }
@@ -45,7 +51,9 @@ func getProjects() (projects []Project, err error) {
 	}
 
 	for _, name := range de {
-		projects = append(projects, Project(name.Name()))
+		if name.Name() != ".archived" {
+			projects = append(projects, Project(name.Name()))
+		}
 	}
 	return projects, err
 }
