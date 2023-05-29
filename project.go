@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 )
 
+// TODO: add a note about manually deleting projects
+
 // Project is a project you'd like to track notes for
 type Project string
 
