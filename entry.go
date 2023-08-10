@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"os/exec"
 	"time"
@@ -139,7 +138,6 @@ func (m *Entry) setViewportContent() {
 		content = "There are no entries for this project :)"
 	} else {
 		file := m.currentFile()
-		log.Println(file)
 		content, _ = ReadFile(file)
 	}
 	str, _ := glamour.Render(content, "dark")

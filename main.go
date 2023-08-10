@@ -88,18 +88,13 @@ func main() {
 }
 
 func StartTea() {
-	if path := os.Getenv("DEBUG_PJ"); path != "" {
-		if f, err := tea.LogToFile(path+"/debug.log", "debug"); err != nil {
-			fmt.Println("couldn't open file for logging")
+	if len(os.Getenv("PJ_DEBUG")) > 0 {
+		f, err := tea.LogToFile("debug.log", "debug")
+		if err != nil {
+			fmt.Println("fatal:", err)
 			os.Exit(1)
-		} else {
-			defer func() {
-				err = f.Close()
-				if err != nil {
-					log.Fatal(err)
-				}
-			}()
 		}
+		defer f.Close()
 	}
 
 	m := InitModel()
