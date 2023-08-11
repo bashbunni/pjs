@@ -1,24 +1,8 @@
-package constants
+package main
 
 import (
-	"github.com/bashbunni/pjs/entry"
-	"github.com/bashbunni/pjs/project"
 	"github.com/charmbracelet/bubbles/key"
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-)
-
-/* CONSTANTS */
-
-var (
-	// P the current tea program
-	P *tea.Program
-	// Er the entry repository for the tui
-	Er *entry.GormRepository
-	// Pr the project repository for the tui
-	Pr *project.GormRepository
-	// WindowSize store the size of the terminal window
-	WindowSize tea.WindowSizeMsg
 )
 
 /* STYLING */
@@ -42,13 +26,14 @@ type keymap struct {
 	Delete key.Binding
 	Back   key.Binding
 	Quit   key.Binding
+	Edit   key.Binding
 }
 
 // Keymap reusable key mappings shared across models
 var Keymap = keymap{
 	Create: key.NewBinding(
-		key.WithKeys("c"),
-		key.WithHelp("c", "create"),
+		key.WithKeys("n"),
+		key.WithHelp("n", "new"),
 	),
 	Enter: key.NewBinding(
 		key.WithKeys("enter"),
@@ -69,5 +54,9 @@ var Keymap = keymap{
 	Quit: key.NewBinding(
 		key.WithKeys("ctrl+c", "q"),
 		key.WithHelp("ctrl+c/q", "quit"),
+	),
+	Edit: key.NewBinding(
+		key.WithKeys("e"),
+		key.WithHelp("e", "open in editor"),
 	),
 }
