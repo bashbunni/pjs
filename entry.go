@@ -112,7 +112,7 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		case key.Matches(msg, Keymap.Create):
 			cmds = append(cmds, openEditorCmd(NewFilePath(m.path)))
-		case key.Matches(msg, Keymap.Open):
+		case key.Matches(msg, Keymap.Edit):
 			if len(m.entries) == 0 {
 				cmds = append(cmds, openEditorCmd(NewFilePath(m.path)))
 			} else {

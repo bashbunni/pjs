@@ -26,14 +26,14 @@ type keymap struct {
 	Delete key.Binding
 	Back   key.Binding
 	Quit   key.Binding
-	Open   key.Binding
+	Edit   key.Binding
 }
 
 // Keymap reusable key mappings shared across models
 var Keymap = keymap{
 	Create: key.NewBinding(
-		key.WithKeys("c"),
-		key.WithHelp("c", "create"),
+		key.WithKeys("n"),
+		key.WithHelp("n", "new"),
 	),
 	Enter: key.NewBinding(
 		key.WithKeys("enter"),
@@ -55,8 +55,8 @@ var Keymap = keymap{
 		key.WithKeys("ctrl+c", "q"),
 		key.WithHelp("ctrl+c/q", "quit"),
 	),
-	Open: key.NewBinding(
-		key.WithKeys("o"),
-		key.WithHelp("o", "open in editor"),
+	Edit: key.NewBinding(
+		key.WithKeys("e"),
+		key.WithHelp("e", "open in editor"),
 	),
 }

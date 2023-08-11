@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// TODO: fix GormRepository vs Repository
+// TODO: rendering is broken; gets fixed when you resize...?!
 type (
 	SyncProjects      struct{}
 	editorFinishedMsg struct {
@@ -80,7 +80,6 @@ func (m Model) Init() tea.Cmd {
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var cmds []tea.Cmd
-	currentProject := m.list.SelectedItem().FilterValue()
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		WindowSize.Width = msg.Width
@@ -91,56 +90,63 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = msg
 	case SyncProjects:
 		items, _ := newList()
-		m.list.SetItems(items)
+		m.mode = nav
+		m.input.Blur()
+		return m, m.list.SetItems(items)
 	case tea.KeyMsg:
-		if m.input.Focused() {
+		switch m.mode {
+		case nav:
+			return m.handleNav(msg)
+		case edit:
 			if key.Matches(msg, Keymap.Enter) {
-				if m.mode == create {
-					cmds = append(cmds, createProjectCmd(m.input.Value()))
-				}
-				if m.mode == edit {
-					cmds = append(cmds, renameProjectCmd(
-						Project(currentProject),
-						m.input.Value()))
-				}
-				m.input.SetValue("")
-				m.mode = nav
-				m.input.Blur()
+				return m, renameProjectCmd(
+					Project(m.list.SelectedItem().FilterValue()),
+					m.input.Value())
 			}
-			if key.Matches(msg, Keymap.Back) {
-				m.input.SetValue("")
-				m.mode = nav
-				m.input.Blur()
+		case create:
+			if key.Matches(msg, Keymap.Enter) {
+				return m, createProjectCmd(m.input.Value())
 			}
-			// only log keypresses for the input field when it's focused
-			m.input, cmd = m.input.Update(msg)
-			cmds = append(cmds, cmd)
-		} else {
-			switch {
-			case key.Matches(msg, Keymap.Create):
-				m.mode = create
-				m.input.Focus()
-				cmd = textinput.Blink
-			case key.Matches(msg, Keymap.Quit):
-				m.quitting = true
-				return m, tea.Quit
-			case key.Matches(msg, Keymap.Enter):
-				p := Project(currentProject)
-				e := InitEntry(p.Path())
-				return e, e.Init()
-			case key.Matches(msg, Keymap.Rename):
-				m.mode = edit
-				m.input.Focus()
-				cmd = textinput.Blink
-			case key.Matches(msg, Keymap.Delete):
-				cmd = deleteProjectCmd(Project(currentProject))
-			default:
-				m.list, cmd = m.list.Update(msg)
-			}
-			cmds = append(cmds, cmd)
 		}
+		// keys no matter the state
+		if key.Matches(msg, Keymap.Back) {
+			m.input.SetValue("")
+			m.input.Blur()
+			m.mode = nav
+		}
+		if key.Matches(msg, Keymap.Quit) {
+			m.quitting = true
+			return m, tea.Quit
+		}
+
+		// only log keypresses for the input field when it's focused
+		m.input, cmd = m.input.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 	return m, tea.Batch(cmds...)
+}
+
+func (m Model) handleNav(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
+	currentProject := m.list.SelectedItem().FilterValue()
+	switch {
+	case key.Matches(msg, Keymap.Create):
+		m.mode = create
+		m.input.Focus()
+		return m, textinput.Blink
+	case key.Matches(msg, Keymap.Enter):
+		p := Project(currentProject)
+		e := InitEntry(p.Path())
+		return e, e.Init()
+	case key.Matches(msg, Keymap.Rename):
+		m.mode = edit
+		m.input.Focus()
+		return m, textinput.Blink
+	case key.Matches(msg, Keymap.Delete):
+		return m, deleteProjectCmd(Project(currentProject))
+	}
+	var cmd tea.Cmd
+	m.list, cmd = m.list.Update(msg)
+	return m, cmd
 }
 
 // View return the text UI to be output to the terminal
@@ -154,12 +160,11 @@ func (m Model) View() string {
 	} else {
 		err = m.err.Error()
 	}
-	if m.input.Focused() {
+	if m.mode == nav {
 		return DocStyle.Render(
 			lipgloss.JoinVertical(
 				lipgloss.Left,
 				m.list.View(),
-				m.input.View(),
 				err,
 			))
 	}
@@ -167,6 +172,7 @@ func (m Model) View() string {
 		lipgloss.JoinVertical(
 			lipgloss.Left,
 			m.list.View(),
+			m.input.View(),
 			err,
 		))
 }
