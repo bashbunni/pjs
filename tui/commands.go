@@ -11,8 +11,6 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-const defaultEditor = "vim"
-
 /* PROJECTS */
 
 func openEditorCmd() tea.Cmd {
@@ -22,10 +20,15 @@ func openEditorCmd() tea.Cmd {
 			return errMsg{error: err}
 		}
 	}
+
 	editor := os.Getenv("EDITOR")
 	if editor == "" {
-		editor = defaultEditor
+		editor, err = utils.GetAvailableEditor()
+		if err != nil {
+			panic(err)
+		}
 	}
+
 	c := exec.Command(editor, file.Name())
 	return tea.ExecProcess(c, func(err error) tea.Msg {
 		return editorFinishedMsg{err, file}
