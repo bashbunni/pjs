@@ -77,7 +77,14 @@ func (m *Entry) setViewportContent() {
 	if len(m.entries) == 0 {
 		content = "There are no entries for this project :)"
 	} else {
-		content = entry.FormatEntry(m.entries[m.paginator.Page])
+		var entryNum int
+		if m.paginator.Page >= len(m.entries) && len(m.entries) > 0 {
+			entryNum = m.paginator.Page - 1
+		} else {
+			entryNum = m.paginator.Page
+		}
+
+		content = entry.FormatEntry(m.entries[entryNum])
 	}
 	str, err := glamour.Render(content, "dark")
 	if err != nil {
@@ -116,6 +123,18 @@ func (m Entry) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, constants.Keymap.Quit):
 			m.quitting = true
 			return m, tea.Quit
+		// add delete entry functionality
+		case key.Matches(msg, constants.Keymap.Delete):
+			if len(m.entries) > 0 {
+				currEntryId := m.entries[m.paginator.Page].ID
+
+				// if i'm on the last page, go back one page, else it will crash
+				if m.paginator.Page == len(m.entries)-1 {
+					m.paginator.PrevPage()
+				}
+
+				return m, m.deleteEntryCmd(currEntryId)
+			}
 		}
 	}
 
