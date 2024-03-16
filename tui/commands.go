@@ -13,7 +13,7 @@ import (
 
 const defaultEditor = "vim"
 
-/* PROJECTS */
+/* ENTRIES */
 
 func openEditorCmd() tea.Cmd {
 	file, err := os.CreateTemp(os.TempDir(), "")
@@ -51,7 +51,14 @@ func (m Entry) createEntryCmd(file *os.File) tea.Cmd {
 	}
 }
 
-/* ENTRIES */
+func (m Entry) deleteEntryCmd(id uint) tea.Cmd {
+	return func() tea.Msg {
+		constants.Er.DeleteEntryByID(id)
+		return m.setupEntries()
+	}
+}
+
+/* PROJECTS */
 
 func createProjectCmd(name string, pr *project.GormRepository) tea.Cmd {
 	return func() tea.Msg {
